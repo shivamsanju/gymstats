@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Workout &amp; Muscle Analytics</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+    .tab-btn.active { background-color: #0f4c5c; color: #ffffff; }
+    .tab-btn:not(.active) { color: #475569; }
+    .tab-btn:not(.active):hover { background-color: #e2e8f0; color: #0f172a; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen antialiased">
+  <!-- Toast -->
+  <div id="toast" class="fixed bottom-4 right-4 z-50 hidden max-w-sm rounded-xl px-4 py-3 text-sm font-medium text-white shadow-lg transition-all"></div>
+
+  <!-- Paste Modal -->
+  <div id="pasteModal" class="fixed inset-0 z-40 hidden items-center justify-center bg-slate-900/50 p-4">
+    <div class="w-full max-w-xl rounded-2xl bg-white p-6 shadow-xl">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-lg font-bold text-slate-900">Paste CSV or .gkdb JSON</h3>
+        <button id="closePasteBtn" type="button" class="rounded-lg px-2 py-1 text-slate-500 hover:bg-slate-100">Close</button>
+      </div>
+      <p class="text-xs text-slate-500 mb-3">Paste raw GymKing <code>.gkdb</code> JSON, GymKing CSV, or Lyfta CSV export text below.</p>
+      <textarea id="pasteInput" rows="8" class="w-full rounded-xl border border-slate-300 p-3 font-mono text-xs focus:border-teal-700 focus:outline-none" placeholder='{"workouts": [...], "exercises": [...]} or Title,Date,Duration,Exercise...'></textarea>
+      <div class="mt-4 flex justify-end gap-2">
+        <button id="cancelPasteBtn" type="button" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</button>
+        <button id="applyPasteBtn" type="button" class="rounded-xl bg-[#0f4c5c] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0c3d4a]">Load Data</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="bg-[#0f4c5c] text-white shadow-sm">
+    <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <div>
+        <h1 class="text-xl font-bold tracking-tight">Workout &amp; Muscle Analytics</h1>
+        <p id="sourceBadge" class="text-xs text-teal-100 mt-0.5">No data loaded</p>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <label class="cursor-pointer rounded-xl bg-white/15 px-3 py-2 text-xs font-semibold text-white hover:bg-white/25 transition">
+          Upload .gkdb / .csv
+          <input id="fileInput" type="file" accept=".gkdb,.json,.csv,.txt" class="hidden" />
+        </label>
+        <button id="openPasteBtn" type="button" class="rounded-xl bg-white/15 px-3 py-2 text-xs font-semibold text-white hover:bg-white/25 transition">Paste Data</button>
+        <button id="clearDataBtn" type="button" class="hidden rounded-xl bg-white/10 px-3 py-2 text-xs font-medium text-teal-100 hover:bg-white/20 transition">Clear Data</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-7xl px-3 py-4 sm:px-6 pb-24 md:pb-6 space-y-4">
+    <!-- Empty State / Insert Data Prompt -->
+    <section id="emptyStatePrompt" class="rounded-2xl bg-white p-6 sm:p-8 shadow-sm border border-slate-200 text-center space-y-5">
+      <div class="mx-auto max-w-md space-y-2">
+        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-50 text-[#0f4c5c] text-xl font-bold">📊</div>
+        <h2 class="text-lg font-bold text-slate-900">Insert Your Workout Data</h2>
+        <p class="text-xs sm:text-sm text-slate-500">Upload your latest <code>.gkdb</code> or <code>.csv</code> export, paste raw data, or load a remote URL to generate your training &amp; muscle analytics.</p>
+      </div>
+      <div class="flex flex-wrap justify-center gap-2.5">
+        <label class="cursor-pointer rounded-xl bg-[#0f4c5c] px-4 py-2.5 text-xs sm:text-sm font-semibold text-white hover:bg-[#0c3d4a] transition">
+          Choose .gkdb / .csv File
+          <input id="emptyFileInput" type="file" accept=".gkdb,.json,.csv,.txt" class="hidden" />
+        </label>
+        <button id="emptyPasteBtn" type="button" class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50 transition">Paste CSV / JSON</button>
+      </div>
+      <div class="mx-auto max-w-lg flex items-center gap-2 pt-1">
+        <input id="emptyUrlInput" type="url" placeholder="https://... (raw .gkdb or .csv URL)" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs sm:text-sm focus:border-[#0f4c5c] focus:outline-none" />
+        <button id="emptyLoadUrlBtn" type="button" class="shrink-0 rounded-xl bg-slate-800 px-4 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-slate-900 transition">Load URL</button>
+      </div>
+    </section>
+
+    <div id="dashboardContent" class="hidden space-y-4">
+    <!-- Mobile Toggle for Data & Filters -->
+    <div class="flex items-center justify-between md:hidden">
+      <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Dashboard</span>
+      <button id="toggleControlsBtn" type="button" class="rounded-xl bg-white border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm active:bg-slate-100">Data &amp; Filters ▾</button>
+    </div>
+
+    <!-- Data Source Connector & Filters -->
+    <section id="controlsPanel" class="hidden md:block rounded-2xl bg-white p-4 shadow-sm border border-slate-200 space-y-3">
+      <div class="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+        <div class="flex flex-1 items-center gap-2">
+          <input id="urlInput" type="url" placeholder="https://... (raw .gkdb or .csv URL for remote/Shortcut sync)" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs focus:border-[#0f4c5c] focus:outline-none" />
+          <button id="loadUrlBtn" type="button" class="shrink-0 rounded-xl bg-[#0f4c5c] px-4 py-2 text-xs font-semibold text-white hover:bg-[#0c3d4a] transition">Load URL</button>
+        </div>
+        <div id="dropZone" class="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-2 text-center text-xs text-slate-500">
+          Drop <code>.gkdb</code> or <code>.csv</code> here to update charts
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-100 text-xs">
+        <div class="flex flex-wrap items-center gap-1.5">
+          <span class="font-semibold text-slate-600">From:</span>
+          <input id="startDateInput" type="date" class="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs" />
+          <span class="font-semibold text-slate-600 ml-1">To:</span>
+          <input id="endDateInput" type="date" class="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs" />
+          <button id="clearDatesBtn" type="button" class="rounded-lg border border-slate-300 bg-slate-50 px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100">All Dates</button>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <span class="font-semibold text-slate-600">Split:</span>
+          <select id="splitSelect" class="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs">
+            <option value="ALL">All Splits</option>
+          </select>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <span class="font-semibold text-slate-600">Optimal Sets/Wk:</span>
+          <input id="minTargetInput" type="number" min="1" max="20" value="8" class="w-14 rounded-lg border border-slate-300 px-2 py-1 text-center text-xs" />
+          <span class="text-slate-400">to</span>
+          <input id="maxTargetInput" type="number" min="4" max="35" value="16" class="w-14 rounded-lg border border-slate-300 px-2 py-1 text-center text-xs" />
+        </div>
+      </div>
+    </section>
+
+    <!-- Navigation Tabs -->
+    <nav class="hidden md:flex flex-wrap gap-1.5 rounded-2xl bg-slate-200/70 p-1.5">
+      <button type="button" data-tab="overview" class="tab-btn active rounded-xl px-3.5 py-2 text-xs font-semibold transition">Overview</button>
+      <button type="button" data-tab="muscles" class="tab-btn rounded-xl px-3.5 py-2 text-xs font-semibold transition">Muscle Balance</button>
+      <button type="button" data-tab="prs" class="tab-btn rounded-xl px-3.5 py-2 text-xs font-semibold transition">Personal Records</button>
+      <button type="button" data-tab="log" class="tab-btn rounded-xl px-3.5 py-2 text-xs font-semibold transition">Workout Log</button>
+      <button type="button" data-tab="shortcut" class="tab-btn rounded-xl px-3.5 py-2 text-xs font-semibold transition">iOS Shortcut Guide</button>
+    </nav>
+
+    <!-- KPI Strip -->
+    <section class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <div class="rounded-2xl bg-white p-4 shadow-sm border border-slate-200">
+        <p class="text-xs font-medium text-slate-500">Workouts</p>
+        <p id="kpiWorkouts" class="mt-1 text-2xl font-extrabold text-slate-900">0</p>
+      </div>
+      <div class="rounded-2xl bg-white p-4 shadow-sm border border-slate-200">
+        <p class="text-xs font-medium text-slate-500">Total Sets</p>
+        <p id="kpiSets" class="mt-1 text-2xl font-extrabold text-slate-900">0</p>
+      </div>
+      <div class="rounded-2xl bg-white p-4 shadow-sm border border-slate-200">
+        <p class="text-xs font-medium text-slate-500">Total Volume</p>
+        <p id="kpiVolume" class="mt-1 text-2xl font-extrabold text-[#0f4c5c]">0 kg</p>
+      </div>
+      <div class="rounded-2xl bg-white p-4 shadow-sm border border-slate-200">
+        <p class="text-xs font-medium text-slate-500">Heaviest Lift</p>
+        <p id="kpiMaxWeight" class="mt-1 text-2xl font-extrabold text-slate-900">0 kg</p>
+      </div>
+      <div class="rounded-2xl bg-white p-4 shadow-sm border border-slate-200 col-span-2 sm:col-span-1">
+        <p class="text-xs font-medium text-slate-500">Avg Duration</p>
+        <p id="kpiAvgDur" class="mt-1 text-2xl font-extrabold text-slate-900">0 min</p>
+      </div>
+    </section>
+
+    <!-- TAB 1: Overview -->
+    <section id="tab-overview" class="tab-panel space-y-4">
+      <!-- Training Improvement Insights -->
+      <div class="rounded-2xl bg-white p-4 sm:p-5 shadow-sm border border-slate-200 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <h2 class="text-sm font-bold text-slate-900">How to Improve Your Training</h2>
+          <span id="balanceRatioBadge" class="rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-[#0f4c5c]">Analyzing...</span>
+        </div>
+        <div id="coachingInsights" class="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3 text-xs"></div>
+      </div>
+      <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <div class="rounded-2xl bg-white p-5 shadow-sm border border-slate-200">
+          <h2 class="text-sm font-bold text-slate-800 mb-3">Volume by Split (kg)</h2>
+          <div class="relative h-72"><canvas id="splitVolumeChart"></canvas></div>
+        </div>
+        <div class="rounded-2xl bg-white p-5 shadow-sm border border-slate-200">
+          <h2 class="text-sm font-bold text-slate-800 mb-3">Weekly Training Volume (kg)</h2>
+          <div class="relative h-72"><canvas id="weeklyVolumeChart"></canvas></div>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <div class="rounded-2xl bg-white p-5 shadow-sm border border-slate-200">
+          <h2 class="text-sm font-bold text-slate-800 mb-3">Sessions &amp; Sets by Split</h2>
+          <div class="relative h-72"><canvas id="splitSetsChart"></canvas></div>
+        </div>
+        <div class="rounded-2xl bg-white p-5 shadow-sm border border-slate-200">
+          <h2 class="text-sm font-bold text-slate-800 mb-3">Sets by Equipment</h2>
+          <div class="relative h-72"><canvas id="equipmentChart"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: Muscle Balance -->
+    <section id="tab-muscles" class="tab-panel hidden space-y-5">
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div class="rounded-2xl bg-rose-50 border border-rose-200 p-4">
+          <p class="text-xs font-bold uppercase tracking-wide text-rose-700">Needs Attention (Undertrained)</p>
+          <p id="undertrainedList" class="mt-1.5 text-sm font-medium text-rose-900">-</p>
+        </div>
+        <div class="rounded-2xl bg-emerald-50 border border-emerald-200 p-4">
+          <p class="text-xs font-bold uppercase tracking-wide text-emerald-700">Optimal Weekly Volume</p>
+          <p id="optimalList" class="mt-1.5 text-sm font-medium text-emerald-900">-</p>
+        </div>
+        <div class="rounded-2xl bg-amber-50 border border-amber-200 p-4">
+          <p class="text-xs font-bold uppercase tracking-wide text-amber-700">High / Watch Overtraining</p>
+          <p id="overtrainedList" class="mt-1.5 text-sm font-medium text-amber-900">-</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <div class="rounded-2xl bg-white p-5 shadow-sm border border-slate-200">
+          <h2 class="text-sm font-bold text-slate-800 mb-3">Total Sets by Muscle Group</h2>
+          <div class="relative h-72"><canvas id="muscleSetsChart"></canvas></div>
+        </div>
+        <div class="rounded-2xl bg-white p-5 shadow-sm border border-slate-200">
+          <h2 class="text-sm font-bold text-slate-800 mb-3">Avg Weekly Sets vs Optimal Range</h2>
+          <div class="relative h-72"><canvas id="muscleWeeklyChart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="rounded-2xl bg-white p-5 shadow-sm border border-slate-200 overflow-x-auto">
+        <h2 class="text-sm font-bold text-slate-800 mb-3">Muscle Group Breakdown</h2>
+        <table class="w-full text-left text-xs">
+          <thead>
+            <tr class="border-b border-slate-200 text-slate-500 uppercase">
+              <th class="py-2 pr-4">Muscle Group</th>
+              <th class="py-2 px-3 text-right">Total Sets</th>
+              <th class="py-2 px-3 text-right">Avg Sets / Wk</th>
+              <th class="py-2 px-3 text-right">Total Volume (kg)</th>
+              <th class="py-2 px-3 text-right">% Share</th>
+              <th class="py-2 pl-3">Training Status</th>
+            </tr>
+          </thead>
+          <tbody id="muscleTableBody" class="divide-y divide-slate-100"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- TAB 3: Personal Records -->
+    <section id="tab-prs" class="tab-panel hidden space-y-5">
+      <div class="rounded-2xl bg-white p-5 shadow-sm border border-slate-200">
+        <h2 class="text-sm font-bold text-slate-800 mb-3">Top 10 Exercises by Max Weight (kg)</h2>
+        <div class="relative h-72"><canvas id="prChart"></canvas></div>
+      </div>
+      <div class="rounded-2xl bg-white p-5 shadow-sm border border-slate-200 space-y-3 overflow-x-auto">
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <h2 class="text-sm font-bold text-slate-800">All Exercise Personal Records</h2>
+          <input id="prSearch" type="text" placeholder="Filter exercise..." class="rounded-xl border border-slate-300 px-3 py-1.5 text-xs focus:border-[#0f4c5c] focus:outline-none" />
+        </div>
+        <table class="w-full text-left text-xs">
+          <thead>
+            <tr class="border-b border-slate-200 text-slate-500 uppercase">
+              <th class="py-2 pr-4">Exercise</th>
+              <th class="py-2 px-3">Muscle</th>
+              <th class="py-2 px-3 text-right">Max Weight (kg)</th>
+              <th class="py-2 px-3 text-right">Est. 1RM (kg)</th>
+              <th class="py-2 px-3 text-right">Total Sets</th>
+              <th class="py-2 pl-3 text-right">Total Volume (kg)</th>
+            </tr>
+          </thead>
+          <tbody id="prTableBody" class="divide-y divide-slate-100"></tbody>
+        </table>
+      </div>
+      <div class="rounded-2xl bg-white p-4 sm:p-5 shadow-sm border border-slate-200 overflow-x-auto">
+        <h2 class="text-sm font-bold text-slate-800 mb-1">Progressive Overload Status (Recent vs Prior)</h2>
+        <p class="text-xs text-slate-500 mb-3">Compares your latest session max weight/volume against your earlier average for each lift.</p>
+        <table class="w-full text-left text-xs">
+          <thead>
+            <tr class="border-b border-slate-200 text-slate-500 uppercase">
+              <th class="py-2 pr-3">Exercise</th>
+              <th class="py-2 px-2 text-right">Prior Avg (kg)</th>
+              <th class="py-2 px-2 text-right">Latest (kg)</th>
+              <th class="py-2 pl-2">Trend</th>
+            </tr>
+          </thead>
+          <tbody id="overloadTableBody" class="divide-y divide-slate-100"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- TAB 4: Workout Log -->
+    <section id="tab-log" class="tab-panel hidden space-y-4">
+      <div id="workoutLogList" class="space-y-3"></div>
+    </section>
+
+    <!-- TAB 5: iOS Shortcut Guide -->
+    <section id="tab-shortcut" class="tab-panel hidden rounded-2xl bg-white p-6 shadow-sm border border-slate-200 space-y-4 text-sm text-slate-700">
+      <h2 class="text-base font-bold text-slate-900">Connecting Your iOS Shortcut or Database Export</h2>
+      <p>This app runs entirely in your browser and supports three ways to swap in your latest workout data:</p>
+      <ol class="list-decimal pl-5 space-y-2 text-xs sm:text-sm">
+        <li><strong>Direct File Upload / Drag &amp; Drop:</strong> Tap <em>Upload .gkdb / .csv</em> and pick your latest GymKing <code>.gkdb</code> or <code>.csv</code> (or Lyfta <code>.csv</code>) export from the Files app.</li>
+        <li><strong>Automated URL Sync via iOS Shortcuts:</strong> Host your latest export at a public <code>https://</code> link (e.g., GitHub raw or Dropbox direct link) and open this app with <code>?data=YOUR_HTTPS_URL</code>, or paste the URL into the box above and tap <em>Load URL</em>.</li>
+        <li><strong>Clipboard / Share Sheet:</strong> In your iOS Shortcut, copy the latest CSV/JSON text to the clipboard, tap <em>Paste Data</em>, and paste it in.</li>
+      </ol>
+      <p class="text-xs text-slate-500">Your most recently loaded dataset is saved locally in your browser so it persists across reloads.</p>
+    </section>
+    </div>
+  </main>
+
+  <!-- Mobile Bottom Navigation -->
+  <nav id="mobileBottomNav" class="hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur border-t border-slate-200 flex justify-around py-1.5 px-1 md:hidden">
+    <button type="button" data-tab="overview" class="tab-btn active flex-1 rounded-xl py-2 text-[11px] font-semibold text-center">Insights</button>
+    <button type="button" data-tab="muscles" class="tab-btn flex-1 rounded-xl py-2 text-[11px] font-semibold text-center">Muscles</button>
+    <button type="button" data-tab="prs" class="tab-btn flex-1 rounded-xl py-2 text-[11px] font-semibold text-center">PRs</button>
+    <button type="button" data-tab="log" class="tab-btn flex-1 rounded-xl py-2 text-[11px] font-semibold text-center">Log</button>
+    <button type="button" data-tab="shortcut" class="tab-btn flex-1 rounded-xl py-2 text-[11px] font-semibold text-center">Sync</button>
+  </nav>
+
+  <script>
+    const DEFAULT_GKDB = { exercises: [], workouts: [] };
+
+    let allSets = [];
+    let currentSourceLabel = "Default: gymking_export_2026-11-14_updated.gkdb";
+    const charts = {};
+
+    function showToast(msg, isError = false) {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.className = "fixed bottom-4 right-4 z-50 max-w-sm rounded-xl px-4 py-3 text-sm font-medium text-white shadow-lg " + (isError ? "bg-rose-600" : "bg-[#0f4c5c]");
+      el.classList.remove("hidden");
+      setTimeout(() => el.classList.add("hidden"), 3500);
+    }
+
+    function normEquip(eq) {
+      if (!eq) return "Other";
+      if (eq === "Cables") return "Cable";
+      if (eq === "Dumbbell") return "Dumbbells";
+      return eq;
+    }
+
+    function parseGkdb(obj) {
+      const exMap = {};
+      (obj.exercises || []).forEach(e => { exMap[e.id] = e; });
+      const rows = [];
+      (obj.workouts || []).forEach(w => {
+        const ts = w.timestamp || 0;
+        const endTs = w.endTimestamp || ts;
+        const dt = new Date(ts * 1000);
+        // Format in IST (+05:30) or local ISO date
+        const istOffsetMs = 5.5 * 3600 * 1000;
+        const dtIst = new Date(ts * 1000 + istOffsetMs);
+        const dateStr = dtIst.toISOString().slice(0, 10);
+        const durMin = endTs >= ts ? Math.round(((endTs - ts) / 60) * 10) / 10 : 0;
+        (w.executions || []).forEach(ex => {
+          const ref = ex.exercise || {};
+          const meta = exMap[ref.id] || {};
+          const exName = ref.name || meta.name || "Unknown Exercise";
+          const muscle = meta.muscle || "Other";
+          const equip = normEquip(meta.equipment || "Other");
+          (ex.sets || []).forEach((s, idx) => {
+            rows.push({
+              workout_id: String(w.id ?? dateStr),
+              workout_name: w.name || "Workout",
+              date: dateStr,
+              duration_minutes: durMin,
+              exercise_name: exName,
+              muscle,
+              equipment: equip,
+              set_number: (s.index ?? idx) + 1,
+              reps: Number(s.reps || 0),
+              weight_kg: Number(s.weight || 0),
+            });
+          });
+        });
+      });
+      return rows;
+    }
+
+    function parseCsvLine(line) {
+      const out = [];
+      let cur = "";
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') {
+          if (inQuotes && line[i + 1] === '"') { cur += '"'; i++; }
+          else inQuotes = !inQuotes;
+        } else if (ch === ',' && !inQuotes) {
+          out.push(cur.trim());
+          cur = "";
+        } else {
+          cur += ch;
+        }
+      }
+      out.push(cur.trim());
+      return out;
+    }
+
+    function parseCsv(text) {
+      const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+      if (lines.length < 2) return [];
+      const headers = parseCsvLine(lines[0]).map(h => h.toLowerCase().trim());
+      const exMetaByName = {};
+      (DEFAULT_GKDB.exercises || []).forEach(e => { exMetaByName[e.name.toLowerCase()] = e; });
+
+      const rows = [];
+      for (let i = 1; i < lines.length; i++) {
+        const cols = parseCsvLine(lines[i]);
+        const rec = {};
+        headers.forEach((h, idx) => { rec[h] = cols[idx] ?? ""; });
+
+        // Support both GymKing CSV and Lyfta CSV
+        const exName = rec.exercise_name || rec.exercise || "Unknown";
+        const meta = exMetaByName[exName.toLowerCase()] || {};
+        const dateRaw = rec.date || "";
+        const dateStr = dateRaw.slice(0, 10);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) continue;
+
+        let durMin = Number(rec.duration_minutes || 0);
+        if (!durMin && rec.duration && rec.duration.includes(":")) {
+          const parts = rec.duration.split(":").map(Number);
+          durMin = Math.round(((parts[0] || 0) * 60 + (parts[1] || 0) + (parts[2] || 0) / 60) * 10) / 10;
+        }
+
+        rows.push({
+          workout_id: rec.workout_id || (dateStr + "_" + (rec.title || rec.workout_name || "")),
+          workout_name: rec.workout_name || rec.title || "Workout",
+          date: dateStr,
+          duration_minutes: durMin,
+          exercise_name: exName,
+          muscle: rec.muscle || meta.muscle || "Other",
+          equipment: normEquip(rec.equipment || meta.equipment || "Other"),
+          set_number: Number(rec.set_number || i),
+          reps: Number(rec.reps || 0),
+          weight_kg: Number(rec.weight_kg || rec.weight || 0),
+        });
+      }
+      return rows;
+    }
+
+    function loadRawText(text, label) {
+      const trimmed = text.trim();
+      let parsed = [];
+      if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+        const obj = JSON.parse(trimmed);
+        parsed = Array.isArray(obj) ? obj : parseGkdb(obj);
+      } else {
+        parsed = parseCsv(trimmed);
+      }
+      if (!parsed.length) {
+        showToast("No valid workout rows found in that file.", true);
+        return false;
+      }
+      allSets = parsed;
+      currentSourceLabel = label;
+      document.getElementById("emptyStatePrompt").classList.add("hidden");
+      document.getElementById("dashboardContent").classList.remove("hidden");
+      document.getElementById("clearDataBtn").classList.remove("hidden");
+      document.getElementById("mobileBottomNav").classList.remove("hidden");
+      syncDateBounds();
+      populateSplitFilter();
+      renderAll();
+      showToast("Loaded " + parsed.length + " sets from " + label);
+      return true;
+    }
+
+    function syncDateBounds() {
+      const startEl = document.getElementById("startDateInput");
+      const endEl = document.getElementById("endDateInput");
+      if (!allSets.length) {
+        startEl.value = "";
+        endEl.value = "";
+        return;
+      }
+      const dates = allSets.map(r => r.date).sort();
+      startEl.value = dates[0];
+      endEl.value = dates[dates.length - 1];
+    }
+
+    function populateSplitFilter() {
+      const sel = document.getElementById("splitSelect");
+      const prev = sel.value;
+      const splits = Array.from(new Set(allSets.map(r => r.workout_name))).sort();
+      sel.innerHTML = '<option value="ALL">All Splits</option>' + splits.map(s => `<option value="${s}">${s}</option>`).join("");
+      if (splits.includes(prev)) sel.value = prev;
+    }
+
+    function getFilteredSets() {
+      const startVal = document.getElementById("startDateInput").value;
+      const endVal = document.getElementById("endDateInput").value;
+      const splitVal = document.getElementById("splitSelect").value;
+
+      return allSets.filter(r => {
+        if (splitVal !== "ALL" && r.workout_name !== splitVal) return false;
+        if (startVal && r.date < startVal) return false;
+        if (endVal && r.date > endVal) return false;
+        return true;
+      });
+    }
+
+    function getMonday(dateStr) {
+      const d = new Date(dateStr + "T00:00:00Z");
+      const day = d.getUTCDay();
+      const diff = (day === 0 ? -6 : 1) - day;
+      d.setUTCDate(d.getUTCDate() + diff);
+      return d.toISOString().slice(0, 10);
+    }
+
+    function upsertChart(id, config) {
+      if (charts[id]) charts[id].destroy();
+      const ctx = document.getElementById(id).getContext("2d");
+      charts[id] = new Chart(ctx, config);
+    }
+
+    function renderAll() {
+      const rows = getFilteredSets();
+      document.getElementById("sourceBadge").textContent = `${currentSourceLabel} (${rows.length} sets shown)`;
+
+      // KPIs
+      const workoutMap = new Map();
+      let totalVol = 0;
+      let maxWeight = 0;
+      rows.forEach(r => {
+        totalVol += r.reps * r.weight_kg;
+        if (r.weight_kg > maxWeight) maxWeight = r.weight_kg;
+        if (!workoutMap.has(r.workout_id)) {
+          workoutMap.set(r.workout_id, { id: r.workout_id, name: r.workout_name, date: r.date, dur: r.duration_minutes, sets: [], vol: 0 });
+        }
+        const w = workoutMap.get(r.workout_id);
+        w.sets.push(r);
+        w.vol += r.reps * r.weight_kg;
+      });
+
+      const workouts = Array.from(workoutMap.values()).sort((a, b) => b.date.localeCompare(a.date));
+      const avgDur = workouts.length ? workouts.reduce((a, w) => a + w.dur, 0) / workouts.length : 0;
+
+      document.getElementById("kpiWorkouts").textContent = workouts.length.toLocaleString();
+      document.getElementById("kpiSets").textContent = rows.length.toLocaleString();
+      document.getElementById("kpiVolume").textContent = Math.round(totalVol).toLocaleString() + " kg";
+      document.getElementById("kpiMaxWeight").textContent = maxWeight.toFixed(1) + " kg";
+      document.getElementById("kpiAvgDur").textContent = avgDur.toFixed(1) + " min";
+
+      // Active weeks span
+      let activeWeeks = 1;
+      if (rows.length) {
+        const dates = rows.map(r => r.date).sort();
+        const minD = new Date(dates[0] + "T00:00:00Z");
+        const maxD = new Date(dates[dates.length - 1] + "T00:00:00Z");
+        activeWeeks = Math.max(1, Math.ceil((maxD - minD) / (7 * 24 * 3600 * 1000)));
+      }
+
+      // Split aggregations
+      const splitVol = {};
+      const splitSets = {};
+      rows.forEach(r => {
+        splitVol[r.workout_name] = (splitVol[r.workout_name] || 0) + r.reps * r.weight_kg;
+        splitSets[r.workout_name] = (splitSets[r.workout_name] || 0) + 1;
+      });
+      const splitLabels = Object.keys(splitVol);
+      upsertChart("splitVolumeChart", {
+        type: "bar",
+        data: {
+          labels: splitLabels,
+          datasets: [{ label: "Volume (kg)", data: splitLabels.map(k => Math.round(splitVol[k])), backgroundColor: "#0f4c5c", borderRadius: 6 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+      });
+      upsertChart("splitSetsChart", {
+        type: "bar",
+        data: {
+          labels: splitLabels,
+          datasets: [{ label: "Total Sets", data: splitLabels.map(k => splitSets[k]), backgroundColor: "#1b6b7e", borderRadius: 6 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+      });
+
+      // Weekly volume
+      const weekVol = {};
+      rows.forEach(r => {
+        const wk = getMonday(r.date);
+        weekVol[wk] = (weekVol[wk] || 0) + r.reps * r.weight_kg;
+      });
+      const weekLabels = Object.keys(weekVol).sort();
+      upsertChart("weeklyVolumeChart", {
+        type: "line",
+        data: {
+          labels: weekLabels,
+          datasets: [{
+            label: "Weekly Volume (kg)",
+            data: weekLabels.map(k => Math.round(weekVol[k])),
+            borderColor: "#0f4c5c",
+            backgroundColor: "rgba(15,76,92,0.12)",
+            fill: true,
+            tension: 0.3
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+      });
+
+      // Equipment doughnut
+      const eqCounts = {};
+      rows.forEach(r => { eqCounts[r.equipment] = (eqCounts[r.equipment] || 0) + 1; });
+      const eqLabels = Object.keys(eqCounts).sort((a, b) => eqCounts[b] - eqCounts[a]);
+      upsertChart("equipmentChart", {
+        type: "doughnut",
+        data: {
+          labels: eqLabels,
+          datasets: [{
+            data: eqLabels.map(k => eqCounts[k]),
+            backgroundColor: ["#0f4c5c", "#1b6b7e", "#2a9d8f", "#e9c46a", "#f4a261", "#e76f51", "#64748b", "#94a3b8"]
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: window.innerWidth < 640 ? "bottom" : "right" } } }
+      });
+
+      // Muscle Balance
+      const minT = Math.max(1, Number(document.getElementById("minTargetInput").value) || 8);
+      const maxT = Math.max(minT + 1, Number(document.getElementById("maxTargetInput").value) || 16);
+      const lowT = Math.max(1, minT / 2);
+
+      const mStats = {};
+      rows.forEach(r => {
+        if (!mStats[r.muscle]) mStats[r.muscle] = { sets: 0, vol: 0 };
+        mStats[r.muscle].sets += 1;
+        mStats[r.muscle].vol += r.reps * r.weight_kg;
+      });
+      const musclesSorted = Object.entries(mStats)
+        .map(([muscle, st]) => {
+          const wkSets = st.sets / activeWeeks;
+          let status = "Optimal";
+          let badge = "bg-emerald-100 text-emerald-800";
+          let color = "#10b981";
+          if (wkSets < lowT) {
+            status = "Undertrained (Needs Attention)";
+            badge = "bg-rose-100 text-rose-800";
+            color = "#e11d48";
+          } else if (wkSets < minT) {
+            status = "Moderate (Room to Grow)";
+            badge = "bg-amber-100 text-amber-800";
+            color = "#f59e0b";
+          } else if (wkSets > maxT) {
+            status = "High (Watch Overtraining)";
+            badge = "bg-orange-100 text-orange-800";
+            color = "#ea580c";
+          }
+          return { muscle, sets: st.sets, wkSets, vol: st.vol, pct: rows.length ? (st.sets / rows.length) * 100 : 0, status, badge, color };
+        })
+        .sort((a, b) => b.sets - a.sets);
+
+      document.getElementById("undertrainedList").textContent = musclesSorted.filter(m => m.status.startsWith("Undertrained")).map(m => m.muscle).join(", ") || "None";
+      document.getElementById("optimalList").textContent = musclesSorted.filter(m => m.status === "Optimal").map(m => m.muscle).join(", ") || "None";
+      document.getElementById("overtrainedList").textContent = musclesSorted.filter(m => m.status.startsWith("High")).map(m => m.muscle).join(", ") || "None";
+
+      document.getElementById("muscleTableBody").innerHTML = musclesSorted.map(m => `
+        <tr>
+          <td class="py-2 pr-4 font-semibold text-slate-800">${m.muscle}</td>
+          <td class="py-2 px-3 text-right">${m.sets}</td>
+          <td class="py-2 px-3 text-right">${m.wkSets.toFixed(1)}</td>
+          <td class="py-2 px-3 text-right">${Math.round(m.vol).toLocaleString()}</td>
+          <td class="py-2 px-3 text-right">${m.pct.toFixed(1)}%</td>
+          <td class="py-2 pl-3"><span class="inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${m.badge}">${m.status}</span></td>
+        </tr>
+      `).join("");
+
+      upsertChart("muscleSetsChart", {
+        type: "bar",
+        data: {
+          labels: musclesSorted.map(m => m.muscle),
+          datasets: [{ label: "Total Sets", data: musclesSorted.map(m => m.sets), backgroundColor: musclesSorted.map(m => m.color), borderRadius: 4 }]
+        },
+        options: { indexAxis: "y", responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+      });
+
+      upsertChart("muscleWeeklyChart", {
+        type: "bar",
+        data: {
+          labels: musclesSorted.map(m => m.muscle),
+          datasets: [{ label: "Avg Sets / Week", data: musclesSorted.map(m => Number(m.wkSets.toFixed(1))), backgroundColor: musclesSorted.map(m => m.color), borderRadius: 4 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+      });
+
+      // Personal Records
+      const prMap = {};
+      rows.forEach(r => {
+        if (!prMap[r.exercise_name]) {
+          prMap[r.exercise_name] = { name: r.exercise_name, muscle: r.muscle, maxW: 0, est1RM: 0, sets: 0, vol: 0 };
+        }
+        const p = prMap[r.exercise_name];
+        p.sets += 1;
+        p.vol += r.reps * r.weight_kg;
+        if (r.weight_kg > p.maxW) p.maxW = r.weight_kg;
+        const e1rm = r.reps > 0 ? r.weight_kg * (1 + r.reps / 30) : r.weight_kg;
+        if (e1rm > p.est1RM) p.est1RM = e1rm;
+      });
+      const allPrs = Object.values(prMap).sort((a, b) => b.maxW - a.maxW);
+      const top10Prs = allPrs.filter(p => p.maxW > 0).slice(0, 10);
+
+      upsertChart("prChart", {
+        type: "bar",
+        data: {
+          labels: top10Prs.map(p => p.name),
+          datasets: [{ label: "Max Weight (kg)", data: top10Prs.map(p => p.maxW), backgroundColor: "#0f4c5c", borderRadius: 4 }]
+        },
+        options: { indexAxis: "y", responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+      });
+
+      const prQuery = (document.getElementById("prSearch").value || "").toLowerCase();
+      const filteredPrs = allPrs.filter(p => p.name.toLowerCase().includes(prQuery) || p.muscle.toLowerCase().includes(prQuery));
+      document.getElementById("prTableBody").innerHTML = filteredPrs.map(p => `
+        <tr>
+          <td class="py-2 pr-4 font-semibold text-slate-800">${p.name}</td>
+          <td class="py-2 px-3 text-slate-500">${p.muscle}</td>
+          <td class="py-2 px-3 text-right font-semibold">${p.maxW.toFixed(1)}</td>
+          <td class="py-2 px-3 text-right">${p.est1RM.toFixed(1)}</td>
+          <td class="py-2 px-3 text-right">${p.sets}</td>
+          <td class="py-2 pl-3 text-right">${Math.round(p.vol).toLocaleString()}</td>
+        </tr>
+      `).join("");
+
+      // Training Improvement Insights (Push/Pull, Upper/Lower, Frequency, Progressive Overload)
+      const upperMuscles = new Set(["Chest", "Triceps", "Shoulders", "Biceps", "Lats", "Trapezius", "Back", "Forearms"]);
+      const lowerMuscles = new Set(["Quadriceps", "Hamstring", "Glutes", "Calves", "Adductors", "Abductors"]);
+      const pushMuscles = new Set(["Chest", "Triceps", "Shoulders"]);
+      const pullMuscles = new Set(["Lats", "Back", "Biceps", "Trapezius", "Forearms"]);
+      let upperSets = 0, lowerSets = 0, pushSets = 0, pullSets = 0;
+      rows.forEach(r => {
+        if (upperMuscles.has(r.muscle)) upperSets++;
+        if (lowerMuscles.has(r.muscle)) lowerSets++;
+        if (pushMuscles.has(r.muscle)) pushSets++;
+        if (pullMuscles.has(r.muscle)) pullSets++;
+      });
+      const freqPerWk = workouts.length / activeWeeks;
+      const upperPct = rows.length ? Math.round((upperSets / rows.length) * 100) : 0;
+      const lowerPct = rows.length ? Math.round((lowerSets / rows.length) * 100) : 0;
+      const ppRatio = pullSets ? (pushSets / pullSets).toFixed(2) : "N/A";
+      document.getElementById("balanceRatioBadge").textContent = `Push:Pull ${ppRatio} · Upper ${upperPct}% / Lower ${lowerPct}%`;
+
+      // Progressive Overload per exercise (latest date vs prior dates)
+      const exByDate = {};
+      rows.forEach(r => {
+        if (r.weight_kg <= 0) return;
+        if (!exByDate[r.exercise_name]) exByDate[r.exercise_name] = {};
+        if (!exByDate[r.exercise_name][r.date]) exByDate[r.exercise_name][r.date] = 0;
+        if (r.weight_kg > exByDate[r.exercise_name][r.date]) exByDate[r.exercise_name][r.date] = r.weight_kg;
+      });
+      const overloadRows = [];
+      Object.entries(exByDate).forEach(([exName, dateMap]) => {
+        const dList = Object.keys(dateMap).sort();
+        if (dList.length < 2) return;
+        const latestW = dateMap[dList[dList.length - 1]];
+        const priorVals = dList.slice(0, -1).map(d => dateMap[d]);
+        const priorAvg = priorVals.reduce((a, b) => a + b, 0) / priorVals.length;
+        const diff = latestW - priorAvg;
+        let trend = "Steady", cls = "bg-slate-100 text-slate-700";
+        if (diff > 0.5) { trend = `+${diff.toFixed(1)} kg ↑`; cls = "bg-emerald-100 text-emerald-800"; }
+        else if (diff < -0.5) { trend = `${diff.toFixed(1)} kg ↓`; cls = "bg-rose-100 text-rose-800"; }
+        overloadRows.push({ exName, priorAvg, latestW, diff, trend, cls });
+      });
+      overloadRows.sort((a, b) => b.diff - a.diff);
+
+      document.getElementById("overloadTableBody").innerHTML = overloadRows.length
+        ? overloadRows.map(o => `
+          <tr>
+            <td class="py-2 pr-3 font-semibold text-slate-800">${o.exName}</td>
+            <td class="py-2 px-2 text-right">${o.priorAvg.toFixed(1)}</td>
+            <td class="py-2 px-2 text-right font-semibold">${o.latestW.toFixed(1)}</td>
+            <td class="py-2 pl-2"><span class="inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${o.cls}">${o.trend}</span></td>
+          </tr>
+        `).join("")
+        : '<tr><td colspan="4" class="py-3 text-center text-slate-400">Need 2+ weighted sessions per exercise to calculate overload trends.</td></tr>';
+
+      const undertrainedNames = musclesSorted.filter(m => m.status.startsWith("Undertrained")).slice(0, 4).map(m => `${m.muscle} (${m.wkSets.toFixed(1)}/wk)`);
+      const progressingCount = overloadRows.filter(o => o.diff > 0.5).length;
+      const insights = [
+        {
+          title: "1. Fix Volume Gaps",
+          body: undertrainedNames.length ? `Prioritize ${undertrainedNames.join(", ")} — add 3–5 weekly sets to reach optimal growth.` : "All tracked muscle groups are at moderate or optimal weekly volume.",
+          tone: undertrainedNames.length ? "bg-rose-50 border-rose-200 text-rose-900" : "bg-emerald-50 border-emerald-200 text-emerald-900"
+        },
+        {
+          title: "2. Upper / Lower & Push / Pull",
+          body: lowerPct < 20 ? `Lower body is only ${lowerPct}% of sets. Add 1 dedicated Legs session/week to balance ${upperPct}% upper volume.` : `Balanced split (${upperPct}% upper / ${lowerPct}% lower, Push:Pull ${ppRatio}).`,
+          tone: lowerPct < 20 ? "bg-amber-50 border-amber-200 text-amber-900" : "bg-emerald-50 border-emerald-200 text-emerald-900"
+        },
+        {
+          title: "3. Overload & Frequency",
+          body: `Averaging ${freqPerWk.toFixed(1)} sessions/wk. ${progressingCount} of ${overloadRows.length} tracked lifts beat their prior average weight.`,
+          tone: "bg-sky-50 border-sky-200 text-sky-900"
+        }
+      ];
+      document.getElementById("coachingInsights").innerHTML = insights.map(i => `
+        <div class="rounded-xl border p-3 ${i.tone}">
+          <p class="font-bold mb-1">${i.title}</p>
+          <p class="leading-relaxed opacity-90">${i.body}</p>
+        </div>
+      `).join("");
+
+      // Workout Log
+      document.getElementById("workoutLogList").innerHTML = workouts.map(w => {
+        const exNames = Array.from(new Set(w.sets.map(s => s.exercise_name)));
+        return `
+          <div class="rounded-2xl bg-white p-4 shadow-sm border border-slate-200">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <span class="rounded-lg bg-[#0f4c5c] px-2.5 py-0.5 text-xs font-bold text-white">${w.name}</span>
+                <span class="text-sm font-semibold text-slate-800">${w.date}</span>
+              </div>
+              <div class="text-xs text-slate-500">${w.sets.length} sets · ${Math.round(w.vol).toLocaleString()} kg · ${w.dur} min</div>
+            </div>
+            <p class="mt-2 text-xs text-slate-600">${exNames.join(" · ")}</p>
+          </div>
+        `;
+      }).join("");
+    }
+
+    async function fetchRemoteUrl(url) {
+      if (!url.startsWith("https://")) {
+        showToast("Please enter a valid https:// URL.", true);
+        return;
+      }
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const text = await res.text();
+        loadRawText(text, url.split("/").pop() || "Remote URL");
+      } catch (err) {
+        showToast("Could not fetch URL (CORS or network error). Try uploading or pasting instead.", true);
+      }
+    }
+
+    // Event Wiring
+    document.getElementById("toggleControlsBtn").addEventListener("click", () => {
+      const panel = document.getElementById("controlsPanel");
+      panel.classList.toggle("hidden");
+    });
+
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const target = btn.getAttribute("data-tab");
+        document.querySelectorAll(".tab-btn").forEach(b => {
+          b.classList.toggle("active", b.getAttribute("data-tab") === target);
+        });
+        document.querySelectorAll(".tab-panel").forEach(p => p.classList.add("hidden"));
+        document.getElementById("tab-" + target).classList.remove("hidden");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    });
+
+    document.getElementById("fileInput").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const text = await file.text();
+      loadRawText(text, file.name);
+      e.target.value = "";
+    });
+
+    const dz = document.getElementById("dropZone");
+    dz.addEventListener("dragover", (e) => { e.preventDefault(); dz.classList.add("border-[#0f4c5c]", "bg-teal-50"); });
+    dz.addEventListener("dragleave", () => { dz.classList.remove("border-[#0f4c5c]", "bg-teal-50"); });
+    dz.addEventListener("drop", async (e) => {
+      e.preventDefault();
+      dz.classList.remove("border-[#0f4c5c]", "bg-teal-50");
+      const file = e.dataTransfer.files[0];
+      if (file) loadRawText(await file.text(), file.name);
+    });
+
+    document.getElementById("loadUrlBtn").addEventListener("click", () => {
+      fetchRemoteUrl(document.getElementById("urlInput").value.trim());
+    });
+
+    document.getElementById("openPasteBtn").addEventListener("click", () => {
+      document.getElementById("pasteModal").classList.remove("hidden");
+      document.getElementById("pasteModal").classList.add("flex");
+    });
+    const closePaste = () => {
+      document.getElementById("pasteModal").classList.add("hidden");
+      document.getElementById("pasteModal").classList.remove("flex");
+    };
+    document.getElementById("closePasteBtn").addEventListener("click", closePaste);
+    document.getElementById("cancelPasteBtn").addEventListener("click", closePaste);
+    document.getElementById("applyPasteBtn").addEventListener("click", () => {
+      if (loadRawText(document.getElementById("pasteInput").value, "Pasted Data")) closePaste();
+    });
+
+    document.getElementById("emptyFileInput").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      loadRawText(await file.text(), file.name);
+      e.target.value = "";
+    });
+    document.getElementById("emptyPasteBtn").addEventListener("click", () => {
+      document.getElementById("pasteModal").classList.remove("hidden");
+      document.getElementById("pasteModal").classList.add("flex");
+    });
+    document.getElementById("emptyLoadUrlBtn").addEventListener("click", () => {
+      fetchRemoteUrl(document.getElementById("emptyUrlInput").value.trim());
+    });
+
+    document.getElementById("clearDataBtn").addEventListener("click", () => {
+      allSets = [];
+      currentSourceLabel = "No data loaded";
+      document.getElementById("sourceBadge").textContent = "No data loaded";
+      document.getElementById("dashboardContent").classList.add("hidden");
+      document.getElementById("clearDataBtn").classList.add("hidden");
+      document.getElementById("mobileBottomNav").classList.add("hidden");
+      document.getElementById("emptyStatePrompt").classList.remove("hidden");
+      showToast("Data cleared. Insert a new file or URL.");
+    });
+
+    document.getElementById("clearDatesBtn").addEventListener("click", () => {
+      syncDateBounds();
+      renderAll();
+    });
+
+    ["startDateInput", "endDateInput", "splitSelect", "minTargetInput", "maxTargetInput", "prSearch"].forEach(id => {
+      document.getElementById(id).addEventListener("input", renderAll);
+    });
+
+    // Init (starts empty and prompts for data unless ?data=https://... is passed)
+    (function init() {
+      const params = new URLSearchParams(window.location.search);
+      const remoteUrl = params.get("data");
+      if (remoteUrl && remoteUrl.startsWith("https://")) {
+        document.getElementById("urlInput").value = remoteUrl;
+        document.getElementById("emptyUrlInput").value = remoteUrl;
+        fetchRemoteUrl(remoteUrl);
+      }
+    })();
+  </script>
+</body>
+</html>
