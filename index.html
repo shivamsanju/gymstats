@@ -129,8 +129,7 @@
       <!-- Desktop Navigation Tabs -->
       <nav class="hidden md:flex gap-2 rounded-2xl bg-white/5 p-1.5 backdrop-blur-md border border-white/10 w-fit shadow-lg">
         <button type="button" data-tab="overview" class="tab-btn active rounded-xl px-5 py-2 text-sm font-medium transition-all">Overview</button>
-        <button type="button" data-tab="muscles" class="tab-btn rounded-xl px-5 py-2 text-sm font-medium transition-all">Muscles</button>
-        <button type="button" data-tab="prs" class="tab-btn rounded-xl px-5 py-2 text-sm font-medium transition-all">Records</button>
+        <button type="button" data-tab="prs" class="tab-btn rounded-xl px-5 py-2 text-sm font-medium transition-all">Progress</button>
         <button type="button" data-tab="log" class="tab-btn rounded-xl px-5 py-2 text-sm font-medium transition-all">Log</button>
         <button type="button" data-tab="shortcut" class="tab-btn rounded-xl px-5 py-2 text-sm font-medium transition-all">Sync iOS</button>
       </nav>
@@ -139,70 +138,121 @@
       <section class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         <div class="glass-panel rounded-3xl p-5 shadow-lg relative overflow-hidden group">
           <div class="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-          <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">Workouts</p>
+          <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">Sessions</p>
           <p id="kpiWorkouts" class="mt-2 text-3xl font-extrabold text-white">0</p>
         </div>
         <div class="glass-panel rounded-3xl p-5 shadow-lg relative overflow-hidden group">
           <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-          <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">Sets</p>
+          <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">Weekly Sets</p>
           <p id="kpiSets" class="mt-2 text-3xl font-extrabold text-white">0</p>
         </div>
         <div class="glass-panel rounded-3xl p-5 shadow-lg relative overflow-hidden group">
           <div class="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-          <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">Volume</p>
-          <p id="kpiVolume" class="mt-2 text-3xl font-extrabold text-blue-400 drop-shadow-[0_0_10px_rgba(59,130,246,0.3)]">0 kg</p>
+          <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">Readiness</p>
+          <p id="kpiVolume" class="mt-2 text-3xl font-extrabold text-blue-400 drop-shadow-[0_0_10px_rgba(59,130,246,0.3)]">0%</p>
         </div>
         <div class="glass-panel rounded-3xl p-5 shadow-lg relative overflow-hidden group">
           <div class="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-          <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">Top Weight</p>
-          <p id="kpiMaxWeight" class="mt-2 text-3xl font-extrabold text-white">0 kg</p>
+          <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">Fatigue</p>
+          <p id="kpiMaxWeight" class="mt-2 text-3xl font-extrabold text-white">0%</p>
         </div>
         <div class="glass-panel rounded-3xl p-5 shadow-lg col-span-2 sm:col-span-1 relative overflow-hidden group">
           <div class="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-          <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">Avg Time</p>
-          <p id="kpiAvgDur" class="mt-2 text-3xl font-extrabold text-white">0 min</p>
+          <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">Balance</p>
+          <p id="kpiAvgDur" class="mt-2 text-3xl font-extrabold text-white">0%</p>
         </div>
       </section>
 
       <!-- TAB 1: Overview -->
       <section id="tab-overview" class="tab-panel space-y-6">
-        <!-- AI Insights -->
         <div class="glass-panel rounded-3xl p-5 sm:p-6 shadow-lg relative overflow-hidden">
           <div class="absolute -top-24 -right-24 w-48 h-48 bg-blue-500/20 rounded-full blur-3xl"></div>
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 relative z-10">
             <h2 class="text-lg font-bold text-white flex items-center gap-2">
               <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-              Training Insights
+              Training Optimizer
             </h2>
             <span id="balanceRatioBadge" class="rounded-full bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 text-xs font-semibold text-blue-300 backdrop-blur-md">Analyzing...</span>
           </div>
           <div id="coachingInsights" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 relative z-10"></div>
         </div>
 
+        <div class="grid grid-cols-1 gap-6 xl:grid-cols-[1.1fr_1.45fr]">
+          <div class="glass-panel rounded-3xl p-5 sm:p-6 shadow-lg">
+            <div class="flex items-center justify-between gap-3 mb-5">
+              <h2 class="text-sm font-bold text-gray-200 tracking-wide uppercase">Recovery Snapshot</h2>
+              <span class="rounded-full bg-green-500/10 border border-green-500/20 px-2.5 py-1 text-[11px] font-semibold text-green-300">Live</span>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-sm whitespace-nowrap">
+                <thead>
+                  <tr class="border-b border-white/10 text-gray-400 uppercase text-[10px] tracking-wider">
+                    <th class="py-2 pr-3 font-semibold">Muscle</th>
+                    <th class="py-2 px-2 text-right font-semibold">Recovered</th>
+                    <th class="py-2 px-2 text-right font-semibold">Ready</th>
+                    <th class="py-2 px-2 text-right font-semibold">Last</th>
+                    <th class="py-2 pl-3 text-right font-semibold">Need</th>
+                  </tr>
+                </thead>
+                <tbody id="recoveryTableBody" class="divide-y divide-white/5"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="glass-panel rounded-3xl p-5 sm:p-6 shadow-lg">
+            <div class="mb-5 flex items-center justify-between gap-3">
+              <h2 class="text-sm font-bold text-gray-200 tracking-wide uppercase">Weekly Training Load Map</h2>
+              <div class="flex items-center gap-2 text-[10px] font-medium text-gray-400">
+                <button id="prevWeekBtn" type="button" class="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-semibold text-gray-200 hover:bg-white/10 disabled:opacity-40">Prev</button>
+                <span id="selectedWeekLabel" class="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-semibold text-gray-200">Week</span>
+                <button id="nextWeekBtn" type="button" class="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-semibold text-gray-200 hover:bg-white/10 disabled:opacity-40">Next</button>
+              </div>
+            </div>
+            <div class="mb-3 flex items-center justify-end gap-2 text-[10px] font-medium text-gray-400">
+              <span class="uppercase tracking-[0.2em] text-gray-500">Set load</span>
+              <div class="h-2 w-24 rounded-full" style="background:linear-gradient(90deg, rgba(255,255,255,0), #fef08a, #facc15, #f59e0b, #f97316, #ef4444, #7f1d1d);"></div>
+            </div>
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div class="rounded-2xl border border-white/10 bg-black/20 p-3">
+                <p class="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">Front</p>
+                <div id="loadFrontMap" class="adult-map"></div>
+              </div>
+              <div class="rounded-2xl border border-white/10 bg-black/20 p-3">
+                <p class="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">Back</p>
+                <div id="loadBackMap" class="adult-map"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <div class="glass-panel rounded-3xl p-5 sm:p-6 shadow-lg">
-            <h2 class="text-sm font-bold text-gray-200 mb-4 tracking-wide uppercase">Volume by Split (kg)</h2>
-            <div class="relative h-64"><canvas id="splitVolumeChart"></canvas></div>
-          </div>
-          <div class="glass-panel rounded-3xl p-5 sm:p-6 shadow-lg">
-            <h2 class="text-sm font-bold text-gray-200 mb-4 tracking-wide uppercase">Weekly Volume (kg)</h2>
+            <h2 class="text-sm font-bold text-gray-200 mb-4 tracking-wide uppercase">Weekly Load (kg)</h2>
             <div class="relative h-64"><canvas id="weeklyVolumeChart"></canvas></div>
           </div>
-        </div>
-        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <div class="glass-panel rounded-3xl p-5 sm:p-6 shadow-lg">
-            <h2 class="text-sm font-bold text-gray-200 mb-4 tracking-wide uppercase">Sets by Split</h2>
-            <div class="relative h-64"><canvas id="splitSetsChart"></canvas></div>
-          </div>
-          <div class="glass-panel rounded-3xl p-5 sm:p-6 shadow-lg">
-            <h2 class="text-sm font-bold text-gray-200 mb-4 tracking-wide uppercase">Equipment Profile</h2>
-            <div class="relative h-64"><canvas id="equipmentChart"></canvas></div>
+            <div class="mb-4 flex items-center justify-between gap-3">
+              <h2 class="text-sm font-bold text-gray-200 tracking-wide uppercase">Target Progress</h2>
+              <span class="rounded-full bg-white/5 px-2.5 py-1 text-[10px] font-semibold text-gray-300 border border-white/10">Home Focus</span>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-sm whitespace-nowrap">
+                <thead>
+                  <tr class="border-b border-white/10 text-gray-400 uppercase text-[10px] tracking-wider">
+                    <th class="py-2 pr-3 font-semibold">Muscle</th>
+                    <th class="py-2 px-2 text-right font-semibold">Target</th>
+                    <th class="py-2 px-2 text-right font-semibold">Progress</th>
+                    <th class="py-2 px-2 text-right font-semibold">Sets/Wk</th>
+                    <th class="py-2 px-2 text-right font-semibold">Vol</th>
+                    <th class="py-2 pl-3 text-right font-semibold">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="priorityTableBody" class="divide-y divide-white/5"></tbody>
+              </table>
+            </div>
           </div>
         </div>
-      </section>
 
-      <!-- TAB 2: Muscles -->
-      <section id="tab-muscles" class="tab-panel hidden space-y-6">
         <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
           <div class="rounded-3xl bg-red-500/10 border border-red-500/20 p-5 backdrop-blur-md">
             <p class="text-xs font-bold uppercase tracking-wider text-red-400">Needs Attention</p>
@@ -217,49 +267,22 @@
             <p id="overtrainedList" class="mt-2 text-sm font-medium text-orange-200 leading-relaxed">-</p>
           </div>
         </div>
-
-        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <div class="glass-panel rounded-3xl p-5 sm:p-6 shadow-lg">
-            <h2 class="text-sm font-bold text-gray-200 mb-4 tracking-wide uppercase">Sets by Muscle Group</h2>
-            <div class="relative h-72"><canvas id="muscleSetsChart"></canvas></div>
-          </div>
-          <div class="glass-panel rounded-3xl p-5 sm:p-6 shadow-lg">
-            <h2 class="text-sm font-bold text-gray-200 mb-4 tracking-wide uppercase">Weekly Avg vs Targets</h2>
-            <div class="relative h-72"><canvas id="muscleWeeklyChart"></canvas></div>
-          </div>
-        </div>
-
-        <div class="glass-panel rounded-3xl p-5 sm:p-6 shadow-lg overflow-hidden">
-          <h2 class="text-sm font-bold text-gray-200 mb-4 tracking-wide uppercase">Detailed Breakdown</h2>
-          <div class="overflow-x-auto -mx-5 px-5 sm:mx-0 sm:px-0">
-            <table class="w-full text-left text-sm whitespace-nowrap">
-              <thead>
-                <tr class="border-b border-white/10 text-gray-400 uppercase text-xs tracking-wider">
-                  <th class="py-3 pr-4 font-semibold">Muscle</th>
-                  <th class="py-3 px-3 text-right font-semibold">Sets</th>
-                  <th class="py-3 px-3 text-right font-semibold">Sets/Wk</th>
-                  <th class="py-3 px-3 text-right font-semibold">Volume (kg)</th>
-                  <th class="py-3 px-3 text-right font-semibold">% Share</th>
-                  <th class="py-3 pl-4 font-semibold text-center">Status</th>
-                </tr>
-              </thead>
-              <tbody id="muscleTableBody" class="divide-y divide-white/5"></tbody>
-            </table>
-          </div>
-        </div>
       </section>
 
-      <!-- TAB 3: PRs -->
+      <!-- TAB 2: PRs -->
       <section id="tab-prs" class="tab-panel hidden space-y-6">
         <div class="glass-panel rounded-3xl p-5 sm:p-6 shadow-lg">
-          <h2 class="text-sm font-bold text-gray-200 mb-4 tracking-wide uppercase">Top Exercises (Max Weight)</h2>
+          <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h2 class="text-sm font-bold text-gray-200 tracking-wide uppercase">Progressive Overload</h2>
+            <select id="progressExerciseSelect" class="rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"></select>
+          </div>
           <div class="relative h-72"><canvas id="prChart"></canvas></div>
         </div>
         
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div class="glass-panel rounded-3xl p-5 sm:p-6 shadow-lg flex flex-col h-full">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
-              <h2 class="text-sm font-bold text-gray-200 tracking-wide uppercase">All Records</h2>
+              <h2 class="text-sm font-bold text-gray-200 tracking-wide uppercase">Progress</h2>
               <input id="prSearch" type="text" placeholder="Search..." class="rounded-full glass-input px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 w-full sm:w-48" />
             </div>
             <div class="overflow-x-auto flex-1 -mx-5 px-5 sm:mx-0 sm:px-0">
@@ -330,13 +353,9 @@
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
         <span class="text-[10px] font-semibold">Home</span>
       </button>
-      <button type="button" data-tab="muscles" class="tab-btn flex-1 flex flex-col items-center justify-center gap-1 w-full h-full rounded-2xl">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-        <span class="text-[10px] font-semibold">Muscles</span>
-      </button>
       <button type="button" data-tab="prs" class="tab-btn flex-1 flex flex-col items-center justify-center gap-1 w-full h-full rounded-2xl">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M19 3v4M5 11h14M5 11c0 3.866 3.134 7 7 7s7-3.134 7-7M5 11a4 4 0 01-4-4V5h4m14 6a4 4 0 004-4V5h-4m-4 10v4m-4 0h8"/></svg>
-        <span class="text-[10px] font-semibold">Records</span>
+        <span class="text-[10px] font-semibold">Progress</span>
       </button>
       <button type="button" data-tab="log" class="tab-btn flex-1 flex flex-col items-center justify-center gap-1 w-full h-full rounded-2xl">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
@@ -359,6 +378,7 @@
     let allSets = [];
     let currentSourceLabel = "Default Setup";
     const charts = {};
+    let selectedWeekIndex = 0;
 
     function showToast(msg, isError = false) {
       const el = document.getElementById("toast");
@@ -459,6 +479,20 @@
       return rows;
     }
 
+    function setActiveTab(target) {
+      document.querySelectorAll(".tab-btn").forEach(btn => {
+        const isActive = btn.getAttribute("data-tab") === target;
+        btn.classList.toggle("active", isActive);
+        if (btn.closest('#mobileBottomNav')) {
+          btn.classList.toggle("text-blue-400", isActive);
+          btn.classList.toggle("text-gray-500", !isActive);
+        }
+      });
+      document.querySelectorAll(".tab-panel").forEach(panel => {
+        panel.classList.toggle("hidden", panel.id !== `tab-${target}`);
+      });
+    }
+
     function loadRawText(text, label) {
       const trimmed = text.trim();
       let parsed = [];
@@ -485,6 +519,7 @@
       document.getElementById("dashboardContent").classList.remove("hidden");
       document.getElementById("clearDataBtn").classList.remove("hidden");
       document.getElementById("mobileBottomNav").classList.remove("hidden");
+      setActiveTab("overview");
       
       syncDateBounds();
       populateSplitFilter();
@@ -535,7 +570,462 @@
       charts[id] = new Chart(ctx, config);
     }
 
-    function renderAll() {
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function getRecoveryColor(score) {
+      if (score >= 80) return '#34d399';
+      if (score >= 60) return '#fbbf24';
+      if (score >= 40) return '#f59e0b';
+      return '#f87171';
+    }
+
+    function normalizeBodyMuscle(muscle) {
+      const map = {
+        'Bicep': 'Biceps',
+        'Biceps': 'Biceps',
+        'Tricep': 'Triceps',
+        'Triceps': 'Triceps',
+        'Shoulder': 'Shoulders',
+        'Shoulders': 'Shoulders',
+        'Quads': 'Quadriceps',
+        'Quadricep': 'Quadriceps',
+        'Quadriceps': 'Quadriceps',
+        'Hamstring': 'Hamstrings',
+        'Hamstrings': 'Hamstrings',
+        'Calf': 'Calves',
+        'Calves': 'Calves',
+        'Abs': 'Abs',
+        'Core': 'Abs',
+        'Lats': 'Lats',
+        'Back': 'Back',
+        'Trapezius': 'Trapezius',
+        'Glute': 'Glutes',
+        'Glutes': 'Glutes'
+      };
+      return map[muscle] || muscle;
+    }
+
+    function getSetColorForLoad(score) {
+      if (score <= 0) return 'rgba(255,255,255,0)';
+      if (score <= 1) return '#fef08a';
+      if (score <= 2) return '#facc15';
+      if (score <= 3) return '#f59e0b';
+      if (score <= 5) return '#f97316';
+      if (score <= 7) return '#ef4444';
+      return '#7f1d1d';
+    }
+
+    function makeSimpleBodyPart(shape, coords, score, view = 'front') {
+      const fill = getSetColorForLoad(score);
+      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      g.setAttribute('class', `body-part ${view}`);
+      const el = document.createElementNS('http://www.w3.org/2000/svg', shape.type);
+      Object.entries(shape).forEach(([key, value]) => {
+        if (key === 'type') return;
+        el.setAttribute(key, value);
+      });
+      Object.entries(coords).forEach(([key, value]) => {
+        el.setAttribute(key, value);
+      });
+      el.setAttribute('fill', fill);
+      el.setAttribute('fill-opacity', score > 0 ? String(Math.min(1, 0.25 + (score / 8) * 0.75)) : '0');
+      el.setAttribute('stroke', score > 0 ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0)');
+      el.setAttribute('stroke-width', score > 0 ? '1.2' : '0');
+      g.appendChild(el);
+      return g;
+    }
+
+    function buildSimpleBodyMap(scoreMap, view = 'front') {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', '0 0 220 520');
+      svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+      svg.setAttribute('width', '220');
+      svg.setAttribute('height', '520');
+
+      const bodyParts = {
+        head: { type: 'circle', cx: 110, cy: 42, r: 28 },
+        neck: { type: 'rect', x: 98, y: 66, width: 24, height: 18, rx: 6 },
+        shoulders: { type: 'ellipse', cx: 110, cy: 97, rx: 54, ry: 18 },
+        chest: { type: 'ellipse', cx: 110, cy: 156, rx: 42, ry: 40 },
+        back: { type: 'ellipse', cx: 110, cy: 158, rx: 42, ry: 40 },
+        leftShoulder: { type: 'circle', cx: 70, cy: 104, r: 18 },
+        rightShoulder: { type: 'circle', cx: 150, cy: 104, r: 18 },
+        leftArm: { type: 'rect', x: 38, y: 118, width: 20, height: 90, rx: 10 },
+        rightArm: { type: 'rect', x: 162, y: 118, width: 20, height: 90, rx: 10 },
+        leftBiceps: { type: 'ellipse', cx: 58, cy: 158, rx: 12, ry: 20 },
+        rightBiceps: { type: 'ellipse', cx: 162, cy: 158, rx: 12, ry: 20 },
+        abs: { type: 'rect', x: 95, y: 190, width: 30, height: 70, rx: 12 },
+        lats: { type: 'ellipse', cx: 82, cy: 190, rx: 18, ry: 40 },
+        latsRight: { type: 'ellipse', cx: 138, cy: 190, rx: 18, ry: 40 },
+        leftLeg: { type: 'rect', x: 78, y: 270, width: 28, height: 120, rx: 12 },
+        rightLeg: { type: 'rect', x: 114, y: 270, width: 28, height: 120, rx: 12 },
+        quads: { type: 'ellipse', cx: 92, cy: 324, rx: 22, ry: 34 },
+        quadsRight: { type: 'ellipse', cx: 128, cy: 324, rx: 22, ry: 34 },
+        hamstrings: { type: 'ellipse', cx: 92, cy: 375, rx: 20, ry: 32 },
+        hamstringsRight: { type: 'ellipse', cx: 128, cy: 375, rx: 20, ry: 32 },
+        glutes: { type: 'ellipse', cx: 110, cy: 248, rx: 34, ry: 22 },
+        calves: { type: 'ellipse', cx: 92, cy: 440, rx: 18, ry: 28 },
+        calvesRight: { type: 'ellipse', cx: 128, cy: 440, rx: 18, ry: 28 },
+        traps: { type: 'ellipse', cx: 110, cy: 90, rx: 34, ry: 16 },
+      };
+
+      const keyMap = {
+        front: {
+          chest: ['Chest'],
+          leftShoulder: ['Shoulders'],
+          rightShoulder: ['Shoulders'],
+          leftArm: ['Triceps'],
+          rightArm: ['Triceps'],
+          leftBiceps: ['Biceps'],
+          rightBiceps: ['Biceps'],
+          abs: ['Abs'],
+          leftLeg: ['Quadriceps'],
+          rightLeg: ['Quadriceps'],
+          quads: ['Quadriceps'],
+          quadsRight: ['Quadriceps'],
+          calves: ['Calves'],
+          calvesRight: ['Calves'],
+          glutes: ['Glutes'],
+        },
+        back: {
+          traps: ['Trapezius'],
+          back: ['Back'],
+          lats: ['Lats'],
+          latsRight: ['Lats'],
+          glutes: ['Glutes'],
+          hamstrings: ['Hamstrings'],
+          hamstringsRight: ['Hamstrings'],
+          calves: ['Calves'],
+          calvesRight: ['Calves'],
+          leftArm: ['Triceps'],
+          rightArm: ['Triceps'],
+        }
+      };
+
+      const order = view === 'front'
+        ? ['head','neck','shoulders','leftShoulder','rightShoulder','leftBiceps','rightBiceps','leftArm','rightArm','chest','abs','glutes','quads','quadsRight','leftLeg','rightLeg','calves','calvesRight']
+        : ['head','neck','shoulders','traps','back','lats','latsRight','leftArm','rightArm','glutes','hamstrings','hamstringsRight','leftLeg','rightLeg','calves','calvesRight'];
+
+      order.forEach((key) => {
+        const shape = bodyParts[key];
+        if (!shape) return;
+        const keys = keyMap[view][key] || [];
+        let score = 0;
+        keys.forEach((muscleName) => {
+          if (scoreMap[muscleName]) score = Math.max(score, Number(scoreMap[muscleName] || 0));
+        });
+        if (!score && (key === 'leftLeg' || key === 'rightLeg' || key === 'quads' || key === 'quadsRight' || key === 'calves' || key === 'calvesRight')) {
+          score = 0;
+        }
+        if (score === 0 && key === 'head') score = 0;
+        const node = makeSimpleBodyPart(shape, {}, score, view);
+        svg.appendChild(node);
+      });
+
+      const base = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      base.setAttribute('opacity', '0.98');
+      base.appendChild(svg.firstChild);
+      return svg;
+    }
+
+    function getWeekKey(dateStr) {
+      return getMonday(dateStr);
+    }
+
+    function updateWeekMapControls(weekKeys) {
+      const prevBtn = document.getElementById('prevWeekBtn');
+      const nextBtn = document.getElementById('nextWeekBtn');
+      const label = document.getElementById('selectedWeekLabel');
+      if (!prevBtn || !nextBtn || !label) return;
+
+      const hasWeeks = weekKeys.length > 0;
+      prevBtn.disabled = !hasWeeks || selectedWeekIndex <= 0;
+      nextBtn.disabled = !hasWeeks || selectedWeekIndex >= weekKeys.length - 1;
+
+      if (!hasWeeks) {
+        label.textContent = 'No week';
+        return;
+      }
+
+      const weekKey = weekKeys[selectedWeekIndex];
+      const start = new Date(weekKey + 'T00:00:00Z');
+      const end = new Date(start.getTime() + 6 * 86400000);
+      const fmt = (d) => new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(d);
+      label.textContent = `${fmt(start)} - ${fmt(end)}`;
+    }
+
+    function getBodyKeyScore(scoreMap, keys) {
+      let best = 0;
+      keys.forEach((key) => {
+        const value = Number(scoreMap[key] || 0);
+        if (value > best) best = value;
+      });
+      return best;
+    }
+
+    function buildSimpleBodyMapNode(scoreMap, view = 'front') {
+      const root = document.createElement('div');
+      root.className = 'simple-body-map';
+      root.setAttribute('data-view', view);
+      root.style.width = '100%';
+      root.style.maxWidth = '220px';
+      root.style.margin = '0 auto';
+      root.style.position = 'relative';
+
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', '0 0 220 520');
+      svg.setAttribute('width', '220');
+      svg.setAttribute('height', '520');
+      svg.setAttribute('role', 'img');
+      svg.setAttribute('aria-label', `${view} body map`);
+
+      const parts = {
+        shoulders: { type: 'ellipse', cx: 110, cy: 106, rx: 54, ry: 18 },
+        chest: { type: 'ellipse', cx: 110, cy: 156, rx: 38, ry: 34 },
+        core: { type: 'rect', x: 92, y: 185, width: 36, height: 62, rx: 12 },
+        bicepsLeft: { type: 'ellipse', cx: 62, cy: 158, rx: 12, ry: 18 },
+        bicepsRight: { type: 'ellipse', cx: 158, cy: 158, rx: 12, ry: 18 },
+        forearmLeft: { type: 'rect', x: 48, y: 170, width: 16, height: 56, rx: 8 },
+        forearmRight: { type: 'rect', x: 156, y: 170, width: 16, height: 56, rx: 8 },
+        obliqueLeft: { type: 'rect', x: 75, y: 192, width: 16, height: 54, rx: 8 },
+        obliqueRight: { type: 'rect', x: 129, y: 192, width: 16, height: 54, rx: 8 },
+        quadLeft: { type: 'ellipse', cx: 92, cy: 320, rx: 22, ry: 34 },
+        quadRight: { type: 'ellipse', cx: 128, cy: 320, rx: 22, ry: 34 },
+        tibialisLeft: { type: 'ellipse', cx: 92, cy: 444, rx: 14, ry: 22 },
+        tibialisRight: { type: 'ellipse', cx: 128, cy: 444, rx: 14, ry: 22 },
+        traps: { type: 'ellipse', cx: 110, cy: 96, rx: 34, ry: 16 },
+        rearShoulderLeft: { type: 'ellipse', cx: 66, cy: 116, rx: 18, ry: 12 },
+        rearShoulderRight: { type: 'ellipse', cx: 154, cy: 116, rx: 18, ry: 12 },
+        tricepsLeft: { type: 'rect', x: 38, y: 118, width: 18, height: 72, rx: 8 },
+        tricepsRight: { type: 'rect', x: 164, y: 118, width: 18, height: 72, rx: 8 },
+        back: { type: 'ellipse', cx: 110, cy: 168, rx: 42, ry: 40 },
+        latsLeft: { type: 'ellipse', cx: 82, cy: 182, rx: 18, ry: 30 },
+        latsRight: { type: 'ellipse', cx: 138, cy: 182, rx: 18, ry: 30 },
+        glutes: { type: 'ellipse', cx: 110, cy: 252, rx: 36, ry: 22 },
+        hamstringsLeft: { type: 'ellipse', cx: 92, cy: 368, rx: 20, ry: 32 },
+        hamstringsRight: { type: 'ellipse', cx: 128, cy: 368, rx: 20, ry: 32 },
+        calvesLeft: { type: 'ellipse', cx: 92, cy: 440, rx: 16, ry: 24 },
+        calvesRight: { type: 'ellipse', cx: 128, cy: 440, rx: 16, ry: 24 }
+      };
+
+      const map = {
+        front: [
+          ['shoulders', ['Shoulders']],
+          ['chest', ['Chest']],
+          ['core', ['Core', 'Abs']],
+          ['bicepsLeft', ['Biceps']],
+          ['bicepsRight', ['Biceps']],
+          ['forearmLeft', ['Forearms']],
+          ['forearmRight', ['Forearms']],
+          ['obliqueLeft', ['Obliques']],
+          ['obliqueRight', ['Obliques']],
+          ['quadLeft', ['Quadriceps']],
+          ['quadRight', ['Quadriceps']],
+          ['tibialisLeft', ['Tibialis']],
+          ['tibialisRight', ['Tibialis']]
+        ],
+        back: [
+          ['traps', ['Traps', 'Trapezius']],
+          ['rearShoulderLeft', ['Shoulders']],
+          ['rearShoulderRight', ['Shoulders']],
+          ['tricepsLeft', ['Triceps']],
+          ['tricepsRight', ['Triceps']],
+          ['back', ['Back']],
+          ['latsLeft', ['Lats']],
+          ['latsRight', ['Lats']],
+          ['glutes', ['Glutes']],
+          ['hamstringsLeft', ['Hamstrings']],
+          ['hamstringsRight', ['Hamstrings']],
+          ['calvesLeft', ['Calves']],
+          ['calvesRight', ['Calves']]
+        ]
+      };
+
+      const label = document.createElement('div');
+      label.className = 'body-map-label';
+      root.appendChild(label);
+
+      const showLabel = (text, event) => {
+        if (!text) return;
+        label.textContent = text;
+        label.classList.add('visible');
+        const rect = root.getBoundingClientRect();
+        const posX = typeof event === 'object' && event && typeof event.clientX === 'number'
+          ? event.clientX - rect.left
+          : rect.width / 2;
+        const posY = typeof event === 'object' && event && typeof event.clientY === 'number'
+          ? event.clientY - rect.top
+          : 12;
+        label.style.left = `${Math.min(Math.max(posX, 58), rect.width - 58)}px`;
+        label.style.top = `${Math.max(posY - 22, 10)}px`;
+      };
+
+      const hideLabel = () => label.classList.remove('visible');
+
+      (map[view] || map.front).forEach(([key, keys]) => {
+        const part = parts[key];
+        if (!part) return;
+        const score = getBodyKeyScore(scoreMap, keys);
+        const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        const displayName = Array.isArray(keys) ? keys[0] : key;
+        const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+        title.textContent = displayName;
+        group.appendChild(title);
+
+        const element = document.createElementNS('http://www.w3.org/2000/svg', part.type);
+        Object.entries(part).forEach(([attr, value]) => {
+          if (attr === 'type') return;
+          element.setAttribute(attr, String(value));
+        });
+
+        const isTrained = score > 0;
+        element.setAttribute('fill', isTrained ? getSetColorForLoad(score) : 'rgba(255,255,255,0.02)');
+        element.setAttribute('fill-opacity', isTrained ? String(Math.min(0.98, 0.25 + score / 8)) : '0.25');
+        element.setAttribute('stroke', 'rgba(255,255,255,0.28)');
+        element.setAttribute('stroke-width', '1.1');
+        element.style.cursor = 'pointer';
+        group.style.cursor = 'pointer';
+
+        const showGroupLabel = (event) => {
+          showLabel(displayName, event);
+        };
+
+        element.addEventListener('pointerenter', showGroupLabel);
+        element.addEventListener('pointermove', showGroupLabel);
+        element.addEventListener('pointerleave', hideLabel);
+        element.addEventListener('pointerdown', showGroupLabel);
+        element.addEventListener('pointerup', hideLabel);
+
+        group.appendChild(element);
+        svg.appendChild(group);
+      });
+
+      root.appendChild(svg);
+      return root;
+    }
+
+    async function renderBodyMap(muscleStats, mapType = 'load') {
+      const scoreMap = {};
+      (muscleStats || []).forEach((item) => {
+        const normalized = normalizeBodyMuscle(item.muscle);
+        scoreMap[normalized] = clamp(Number(item.score || 0), 0, 16);
+      });
+
+      const mapIds = ['loadFrontMap', 'loadBackMap'];
+      mapIds.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = '';
+      });
+
+      const blocks = [
+        ['loadFrontMap', 'front'],
+        ['loadBackMap', 'back']
+      ];
+
+      blocks.forEach(([id, view]) => {
+        const container = document.getElementById(id);
+        if (!container) return;
+        const map = buildSimpleBodyMapNode(scoreMap, view);
+        if (view === 'back') map.style.transform = 'scaleX(-1)';
+        container.appendChild(map);
+      });
+    }
+
+    async function renderRecoverySection(rows, musclesSorted, targetSets) {
+      const byMuscle = {};
+      rows.forEach(r => {
+        const norm = normalizeBodyMuscle(r.muscle);
+        if (!byMuscle[norm]) byMuscle[norm] = { sets: 0, lastDate: null, totalLoad: 0, recentSets: 0 };
+        byMuscle[norm].sets += 1;
+        byMuscle[norm].totalLoad += r.reps * r.weight_kg;
+        if (!byMuscle[norm].lastDate || r.date > byMuscle[norm].lastDate) byMuscle[norm].lastDate = r.date;
+        const d = new Date(`${r.date}T00:00:00Z`);
+        const ageDays = Math.round((Date.now() - d.getTime()) / 86400000);
+        if (ageDays <= 21) byMuscle[norm].recentSets += 1;
+      });
+
+      const recoveryRows = musclesSorted.map((muscle) => {
+        const key = normalizeBodyMuscle(muscle.muscle);
+        const stats = byMuscle[key] || { sets: 0, lastDate: null, totalLoad: 0, recentSets: 0 };
+        const lastDate = stats.lastDate ? new Date(`${stats.lastDate}T00:00:00Z`) : null;
+        const daysSince = lastDate ? Math.max(0, Math.round((Date.now() - lastDate.getTime()) / 86400000)) : 999;
+        const weeklyStimulus = Number(muscle.wkSets || 0);
+        const target = Math.max(2, targetSets);
+
+        const recencyScore = clamp(100 - (daysSince / 28) * 100, 0, 100);
+        const stimulusScore = clamp((weeklyStimulus / target) * 100, 0, 100);
+        const fatigueScore = clamp((stats.recentSets / Math.max(2, target * 2.25)) * 100, 0, 100);
+        const recoveryScore = Math.round((recencyScore * 0.5) + (stimulusScore * 0.25) + ((100 - fatigueScore) * 0.25));
+
+        const setsNeeded = Math.max(0, Number((target - weeklyStimulus).toFixed(1)));
+        const workedThisWeek = stats.sets > 0;
+        let tone = 'Recovered';
+        if (recoveryScore < 50) tone = 'Needs work';
+        else if (recoveryScore < 75) tone = 'Recovering';
+
+        return {
+          muscle: key,
+          score: recoveryScore,
+          tone,
+          setsNeeded,
+          daysSince,
+          wkSets: weeklyStimulus,
+          workedThisWeek,
+          fatigueScore,
+          recencyScore,
+          stimulusScore,
+        };
+      }).sort((a, b) => b.score - a.score);
+
+      document.getElementById('recoveryTableBody').innerHTML = recoveryRows.slice(0, 5).map((item) => {
+        const barColor = getRecoveryColor(item.score);
+        const readyState = item.score >= 75 ? 'Ready' : item.score >= 55 ? 'Caution' : 'Not ready';
+        const readyTone = item.score >= 75 ? 'text-green-300 bg-green-500/15' : item.score >= 55 ? 'text-yellow-300 bg-yellow-500/15' : 'text-red-300 bg-red-500/15';
+        const recencyLabel = item.daysSince === 999 ? 'No data' : `${item.daysSince}d`;
+        const setsNeed = item.setsNeeded ? `${item.setsNeeded.toFixed(1)} sets` : 'Target hit';
+        return `
+          <tr class="hover:bg-white/5 transition">
+            <td class="py-3 pr-3 font-semibold text-white">${item.muscle}</td>
+            <td class="py-3 px-2 text-right font-bold" style="color:${barColor};">${item.score}%</td>
+            <td class="py-3 px-2 text-right"><span class="inline-block rounded-full px-2 py-1 text-[10px] font-semibold ${readyTone}">${readyState}</span></td>
+            <td class="py-3 px-2 text-right text-gray-400">${recencyLabel}</td>
+            <td class="py-3 pl-3 text-right text-gray-300">${setsNeed}</td>
+          </tr>
+        `;
+      }).join('');
+
+      return recoveryRows;
+    }
+
+    async function renderWeeklyLoadMap(rows) {
+      const weekKeys = Array.from(new Set(rows.map(r => getWeekKey(r.date)))).sort();
+      if (!weekKeys.length) {
+        selectedWeekIndex = 0;
+        updateWeekMapControls([]);
+        const emptyMap = document.getElementById('loadFrontMap');
+        const emptyMapBack = document.getElementById('loadBackMap');
+        if (emptyMap) emptyMap.innerHTML = '';
+        if (emptyMapBack) emptyMapBack.innerHTML = '';
+        return;
+      }
+
+      if (selectedWeekIndex < 0) selectedWeekIndex = 0;
+      if (selectedWeekIndex >= weekKeys.length) selectedWeekIndex = weekKeys.length - 1;
+      const weekKey = weekKeys[selectedWeekIndex];
+      const weekRows = rows.filter(r => getWeekKey(r.date) === weekKey);
+      const muscleCounts = {};
+      weekRows.forEach(r => {
+        const normalize = normalizeBodyMuscle(r.muscle);
+        muscleCounts[normalize] = (muscleCounts[normalize] || 0) + 1;
+      });
+
+      updateWeekMapControls(weekKeys);
+      await renderBodyMap(Object.entries(muscleCounts).map(([muscle, score]) => ({ muscle, score })), 'load');
+    }
+
+    async function renderAll() {
       const rows = getFilteredSets();
       document.getElementById("sourceBadge").textContent = `${currentSourceLabel} (${rows.length} sets)`;
 
@@ -554,12 +1044,6 @@
       const workouts = Array.from(workoutMap.values()).sort((a, b) => b.date.localeCompare(a.date));
       const avgDur = workouts.length ? workouts.reduce((a, w) => a + w.dur, 0) / workouts.length : 0;
 
-      document.getElementById("kpiWorkouts").textContent = workouts.length.toLocaleString();
-      document.getElementById("kpiSets").textContent = rows.length.toLocaleString();
-      document.getElementById("kpiVolume").textContent = Math.round(totalVol).toLocaleString() + " kg";
-      document.getElementById("kpiMaxWeight").textContent = maxWeight.toFixed(1) + " kg";
-      document.getElementById("kpiAvgDur").textContent = avgDur.toFixed(0) + " min";
-
       let activeWeeks = 1;
       if (rows.length) {
         const dates = rows.map(r => r.date).sort();
@@ -572,30 +1056,6 @@
       const colorBlue = '#0A84FF';
       const colorIndigo = '#5E5CE6';
       
-      const splitVol = {}, splitSets = {};
-      rows.forEach(r => {
-        splitVol[r.workout_name] = (splitVol[r.workout_name] || 0) + r.reps * r.weight_kg;
-        splitSets[r.workout_name] = (splitSets[r.workout_name] || 0) + 1;
-      });
-      const splitLabels = Object.keys(splitVol);
-      
-      upsertChart("splitVolumeChart", {
-        type: "bar",
-        data: {
-          labels: splitLabels,
-          datasets: [{ label: "Volume (kg)", data: splitLabels.map(k => Math.round(splitVol[k])), backgroundColor: colorBlue, borderRadius: 6 }]
-        },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-      });
-      upsertChart("splitSetsChart", {
-        type: "bar",
-        data: {
-          labels: splitLabels,
-          datasets: [{ label: "Sets", data: splitLabels.map(k => splitSets[k]), backgroundColor: colorIndigo, borderRadius: 6 }]
-        },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-      });
-
       const weekVol = {};
       rows.forEach(r => { const wk = getMonday(r.date); weekVol[wk] = (weekVol[wk] || 0) + r.reps * r.weight_kg; });
       const weekLabels = Object.keys(weekVol).sort();
@@ -612,22 +1072,6 @@
           }]
         },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-      });
-
-      const eqCounts = {};
-      rows.forEach(r => { eqCounts[r.equipment] = (eqCounts[r.equipment] || 0) + 1; });
-      const eqLabels = Object.keys(eqCounts).sort((a, b) => eqCounts[b] - eqCounts[a]);
-      upsertChart("equipmentChart", {
-        type: "doughnut",
-        data: {
-          labels: eqLabels,
-          datasets: [{
-            data: eqLabels.map(k => eqCounts[k]),
-            backgroundColor: ['#0A84FF', '#32D74B', '#FF9F0A', '#FF453A', '#BF5AF2', '#64D2FF', '#FF375F', '#5E5CE6'],
-            borderWidth: 0
-          }]
-        },
-        options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'right', labels: {color: '#e5e7eb'} } } }
       });
 
       // Muscles
@@ -648,38 +1092,60 @@
         else if (wkSets > maxT) { status = "High (Overtraining)"; badge = "bg-purple-500/20 text-purple-400"; color = '#BF5AF2'; }
         return { muscle, sets: st.sets, wkSets, vol: st.vol, pct: rows.length ? (st.sets/rows.length)*100 : 0, status, badge, color };
       }).sort((a, b) => b.sets - a.sets);
+      const recoveryRows = await renderRecoverySection(rows, musclesSorted, minT);
+      const avgRecovery = recoveryRows.length ? Math.round(recoveryRows.reduce((a, r) => a + r.score, 0) / recoveryRows.length) : 0;
+      const weeklySets = rows.length ? Math.round(rows.length / Math.max(1, activeWeeks)) : 0;
+      const weekKeys = Array.from(new Set(rows.map(r => getWeekKey(r.date)))).sort();
+      if (!weekKeys.length) selectedWeekIndex = 0;
+      else if (selectedWeekIndex >= weekKeys.length) selectedWeekIndex = weekKeys.length - 1;
+      updateWeekMapControls(weekKeys);
+      await renderWeeklyLoadMap(rows);
+      const loadScore = Math.min(100, Math.round((weeklySets / Math.max(1, minT * 1.2)) * 100));
+      const upperM = new Set(["Chest", "Triceps", "Shoulders", "Biceps", "Lats", "Trapezius", "Back", "Forearms"]);
+      const lowerM = new Set(["Quadriceps", "Hamstrings", "Glutes", "Calves", "Adductors", "Abductors"]);
+      let uSets = 0, lSets = 0;
+      rows.forEach(r => {
+        if (upperM.has(normalizeBodyMuscle(r.muscle))) uSets++;
+        if (lowerM.has(normalizeBodyMuscle(r.muscle))) lSets++;
+      });
+      const uPct = rows.length ? Math.round((uSets / rows.length) * 100) : 0;
+      const lPct = rows.length ? Math.round((lSets / rows.length) * 100) : 0;
+      const fatigueScore = Math.max(0, 100 - avgRecovery);
+
+      document.getElementById("kpiWorkouts").textContent = workouts.length.toLocaleString();
+      document.getElementById("kpiSets").textContent = weeklySets.toLocaleString();
+      document.getElementById("kpiVolume").textContent = avgRecovery + "%";
+      document.getElementById("kpiMaxWeight").textContent = `${fatigueScore}%`;
+      document.getElementById("kpiAvgDur").textContent = `${Math.round((uPct || 0))}%`;
 
       document.getElementById("undertrainedList").textContent = musclesSorted.filter(m => m.status.startsWith("Low")).map(m => m.muscle).join(", ") || "None";
       document.getElementById("optimalList").textContent = musclesSorted.filter(m => m.status === "Optimal").map(m => m.muscle).join(", ") || "None";
       document.getElementById("overtrainedList").textContent = musclesSorted.filter(m => m.status.startsWith("High")).map(m => m.muscle).join(", ") || "None";
 
-      document.getElementById("muscleTableBody").innerHTML = musclesSorted.map(m => `
-        <tr class="hover:bg-white/5 transition">
-          <td class="py-3 pr-4 font-semibold text-white">${m.muscle}</td>
-          <td class="py-3 px-3 text-right text-gray-300">${m.sets}</td>
-          <td class="py-3 px-3 text-right font-medium text-white">${m.wkSets.toFixed(1)}</td>
-          <td class="py-3 px-3 text-right text-gray-400">${Math.round(m.vol).toLocaleString()}</td>
-          <td class="py-3 px-3 text-right text-gray-400">${m.pct.toFixed(1)}%</td>
-          <td class="py-3 pl-4 text-center"><span class="inline-block rounded-lg px-2.5 py-1 text-xs font-semibold ${m.badge}">${m.status}</span></td>
-        </tr>
-      `).join("");
-
-      upsertChart("muscleSetsChart", {
-        type: "bar",
-        data: {
-          labels: musclesSorted.map(m => m.muscle),
-          datasets: [{ data: musclesSorted.map(m => m.sets), backgroundColor: musclesSorted.map(m => m.color), borderRadius: 6 }]
-        },
-        options: { indexAxis: "y", responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-      });
-      upsertChart("muscleWeeklyChart", {
-        type: "bar",
-        data: {
-          labels: musclesSorted.map(m => m.muscle),
-          datasets: [{ data: musclesSorted.map(m => Number(m.wkSets.toFixed(1))), backgroundColor: musclesSorted.map(m => m.color), borderRadius: 6 }]
-        },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-      });
+      const targetGoal = Math.max(1, Number(document.getElementById("minTargetInput").value) || 8);
+      document.getElementById("priorityTableBody").innerHTML = musclesSorted.map(m => {
+        const progressPct = clamp((m.wkSets / targetGoal) * 100, 0, 200);
+        const barWidth = Math.min(100, progressPct);
+        const progressText = `${Math.round(progressPct)}%`;
+        const statusTone = m.status.startsWith("Low") ? "text-red-300 bg-red-500/15" : m.status.startsWith("High") ? "text-orange-300 bg-orange-500/15" : "text-green-300 bg-green-500/15";
+        return `
+          <tr class="hover:bg-white/5 transition">
+            <td class="py-3 pr-3 font-semibold text-white">${m.muscle}</td>
+            <td class="py-3 px-2 text-right text-gray-300">${targetGoal} /wk</td>
+            <td class="py-3 px-2 text-right text-gray-200">
+              <div class="flex items-center justify-end gap-2">
+                <div class="h-2 w-20 overflow-hidden rounded-full bg-white/10">
+                  <div class="h-full rounded-full ${m.status.startsWith("Low") ? "bg-red-400" : m.status.startsWith("High") ? "bg-orange-400" : "bg-green-400"}" style="width:${barWidth}%;"></div>
+                </div>
+                <span class="min-w-[3rem] text-right font-medium text-white">${progressText}</span>
+              </div>
+            </td>
+            <td class="py-3 px-2 text-right font-medium text-white">${m.wkSets.toFixed(1)}</td>
+            <td class="py-3 px-2 text-right text-gray-400">${Math.round(m.vol).toLocaleString()}</td>
+            <td class="py-3 pl-3 text-right"><span class="inline-block rounded-lg px-2 py-1 text-[10px] font-semibold ${statusTone}">${m.status}</span></td>
+          </tr>
+        `;
+      }).join("");
 
       // PRs
       const prMap = {};
@@ -692,14 +1158,50 @@
         if (e1rm > p.est1RM) p.est1RM = e1rm;
       });
       const allPrs = Object.values(prMap).sort((a, b) => b.maxW - a.maxW);
-      
+      const progressSelect = document.getElementById("progressExerciseSelect");
+      if (progressSelect) {
+        const selectedExercise = progressSelect.value || (allPrs[0] ? allPrs[0].name : "");
+        progressSelect.innerHTML = allPrs.length ? allPrs.map(p => `<option value="${p.name}">${p.name}</option>`).join("") : '<option value="">No data</option>';
+        if (allPrs.length) progressSelect.value = allPrs.some(p => p.name === selectedExercise) ? selectedExercise : allPrs[0].name;
+      }
+
+      const exerciseProgressMap = {};
+      rows.forEach(r => {
+        if (!r.weight_kg || r.weight_kg <= 0) return;
+        if (!exerciseProgressMap[r.exercise_name]) exerciseProgressMap[r.exercise_name] = [];
+        exerciseProgressMap[r.exercise_name].push({ date: r.date, weight: Number(r.weight_kg) });
+      });
+
+      const selectedProgressExercise = progressSelect && progressSelect.value ? progressSelect.value : (allPrs[0] ? allPrs[0].name : "");
+      const progressSeries = selectedProgressExercise && exerciseProgressMap[selectedProgressExercise]
+        ? exerciseProgressMap[selectedProgressExercise].sort((a, b) => a.date.localeCompare(b.date))
+        : [];
+
       upsertChart("prChart", {
-        type: "bar",
+        type: "line",
         data: {
-          labels: allPrs.slice(0, 10).map(p => p.name),
-          datasets: [{ data: allPrs.slice(0, 10).map(p => p.maxW), backgroundColor: colorBlue, borderRadius: 6 }]
+          labels: progressSeries.map(p => p.date),
+          datasets: [{
+            label: selectedProgressExercise || "Exercise",
+            data: progressSeries.map(p => p.weight),
+            borderColor: colorBlue,
+            backgroundColor: "rgba(10, 132, 255, 0.15)",
+            fill: false,
+            borderWidth: 3,
+            pointRadius: 4,
+            pointHoverRadius: 5,
+            tension: 0.35
+          }]
         },
-        options: { indexAxis: "y", responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { maxTicksLimit: 8, color: '#9ca3af' }, grid: { color: 'rgba(255,255,255,0.04)' } },
+            y: { ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255,255,255,0.04)' } }
+          }
+        }
       });
 
       const prQuery = (document.getElementById("prSearch").value || "").toLowerCase();
@@ -744,23 +1246,48 @@
         </tr>
       `).join("") : '<tr><td colspan="4" class="py-4 text-center text-gray-500">Need 2+ sessions per exercise to show trends.</td></tr>';
 
-      const upperM = new Set(["Chest", "Triceps", "Shoulders", "Biceps", "Lats", "Trapezius", "Back", "Forearms"]);
-      const lowerM = new Set(["Quadriceps", "Hamstring", "Glutes", "Calves", "Adductors", "Abductors"]);
-      let uSets=0, lSets=0, puSets=0, plSets=0;
-      rows.forEach(r => {
-        if (upperM.has(r.muscle)) uSets++;
-        if (lowerM.has(r.muscle)) lSets++;
-        if (["Chest", "Triceps", "Shoulders"].includes(r.muscle)) puSets++;
-        if (["Lats", "Back", "Biceps", "Trapezius"].includes(r.muscle)) plSets++;
-      });
-      const uPct = rows.length ? Math.round((uSets/rows.length)*100) : 0;
-      const lPct = rows.length ? Math.round((lSets/rows.length)*100) : 0;
-      document.getElementById("balanceRatioBadge").textContent = `Upper ${uPct}% / Lower ${lPct}%`;
+      const highestPriority = recoveryRows[0] ? recoveryRows[0].muscle : "None";
+      const undertrainedNames = musclesSorted.filter(m => m.status.startsWith("Low")).map(m => m.muscle);
+      const focusName = undertrainedNames.length ? undertrainedNames[0] : (musclesSorted[0] ? musclesSorted[0].muscle : "General volume");
+      document.getElementById("balanceRatioBadge").textContent = `Recovery ${avgRecovery}% · Balance ${uPct}% / ${lPct}%`;
+
+      const weeklyDistribution = {
+        push: rows.filter(r => ["Chest", "Shoulders", "Triceps"].includes(normalizeBodyMuscle(r.muscle))).length,
+        pull: rows.filter(r => ["Back", "Lats", "Biceps", "Trapezius"].includes(normalizeBodyMuscle(r.muscle))).length,
+        legs: rows.filter(r => ["Quadriceps", "Hamstrings", "Glutes", "Calves"].includes(normalizeBodyMuscle(r.muscle))).length,
+        core: rows.filter(r => ["Abs"].includes(normalizeBodyMuscle(r.muscle))).length,
+      };
+      const totalDistribution = Math.max(1, weeklyDistribution.push + weeklyDistribution.pull + weeklyDistribution.legs + weeklyDistribution.core);
+      const pushShare = Math.round((weeklyDistribution.push / totalDistribution) * 100);
+      const pullShare = Math.round((weeklyDistribution.pull / totalDistribution) * 100);
+      const legShare = Math.round((weeklyDistribution.legs / totalDistribution) * 100);
+      const distributionText = `Push ${pushShare}% · Pull ${pullShare}% · Legs ${legShare}% · Core ${Math.round((weeklyDistribution.core / totalDistribution) * 100)}%`;
+      const riskMuscle = recoveryRows.filter(r => r.score < 60).sort((a, b) => a.score - b.score)[0]?.muscle || focusName;
+
+      const readinessMessage = avgRecovery >= 75
+        ? "Your body is ready for hard work. Keep the intensity, but avoid unnecessary extra volume."
+        : avgRecovery >= 50
+          ? "You are moderately recovered. Keep work sets controlled and do not add much extra stress this week."
+          : "You are still under-recovered. Reduce total volume and keep effort moderate until recovery improves.";
+
+      const fatigueMessage = fatigueScore >= 60
+        ? "Your fatigue is high, which usually means performance will drop and recovery will lag behind. Action: cut 20-30% of total sets or add an extra rest day this week."
+        : fatigueScore >= 35
+          ? "Your fatigue is moderate. You can keep training, but avoid piling on extra hard sets to the same muscles."
+          : "Fatigue is low enough to keep progressing. You have room to add a little more work if recovery stays stable.";
+
+      const trainingRecommendation = undertrainedNames.length
+        ? `Your biggest opportunity is ${focusName}. Add only 1-2 focused sets, then keep the rest of the week steady so you don't push fatigue higher.`
+        : `Your training is balanced enough. Keep the same stimulus, but avoid adding extra work to muscle groups that are already recovering well.`;
+
+      const balanceMessage = Math.abs(pushShare - pullShare) <= 15 && legShare >= 20
+        ? "Your split is reasonably balanced. Keep this pattern and focus on quality, not just more sets."
+        : "Your split is uneven. Add more work to the underrepresented area, especially if a muscle group is under-recovered or undertrained.";
 
       document.getElementById("coachingInsights").innerHTML = [
-        { t: "1. Muscle Focus", b: musclesSorted.filter(m=>m.status.startsWith("Low")).length ? "Increase volume for undertrained muscles." : "Volume is optimal.", style: "border-blue-500/30 bg-blue-500/5 text-blue-100" },
-        { t: "2. Upper / Lower", b: `Currently at ${uPct}% Upper / ${lPct}% Lower body splits.`, style: "border-indigo-500/30 bg-indigo-500/5 text-indigo-100" },
-        { t: "3. Progressive Overload", b: `${overloadRows.filter(o=>o.diff>0.5).length} of ${overloadRows.length} lifts beating averages.`, style: "border-green-500/30 bg-green-500/5 text-green-100" }
+        { t: "1. Readiness", b: `Readiness is ${avgRecovery}%. ${readinessMessage}`, style: "border-blue-500/30 bg-blue-500/5 text-blue-100" },
+        { t: "2. Fatigue", b: `Fatigue pressure is ${fatigueScore}%. ${fatigueMessage}`, style: "border-indigo-500/30 bg-indigo-500/5 text-indigo-100" },
+        { t: "3. What to do next", b: `${trainingRecommendation} ${balanceMessage} Recovery risk is still highest in ${riskMuscle}.`, style: "border-green-500/30 bg-green-500/5 text-green-100" }
       ].map(i => `<div class="rounded-2xl border p-4 backdrop-blur-sm ${i.style}"><p class="font-bold mb-1 tracking-wide">${i.t}</p><p class="text-sm opacity-90">${i.b}</p></div>`).join("");
 
       // Workout Log (Grid styling for dark mode)
@@ -796,18 +1323,17 @@
     document.querySelectorAll(".tab-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         const tgt = btn.getAttribute("data-tab");
-        document.querySelectorAll(".tab-btn").forEach(b => {
-          b.classList.toggle("active", b.getAttribute("data-tab") === tgt);
-          if (b.closest('#mobileBottomNav')) {
-            b.classList.toggle("text-blue-400", b.getAttribute("data-tab") === tgt);
-            b.classList.toggle("text-gray-500", b.getAttribute("data-tab") !== tgt);
-          }
-        });
-        document.querySelectorAll(".tab-panel").forEach(p => p.classList.add("hidden"));
-        document.getElementById("tab-" + tgt).classList.remove("hidden");
+        setActiveTab(tgt);
         window.scrollTo({ top: 0, behavior: "smooth" });
       });
     });
+
+    const progressExerciseSelect = document.getElementById("progressExerciseSelect");
+    if (progressExerciseSelect) {
+      progressExerciseSelect.addEventListener("change", () => {
+        renderAll();
+      });
+    }
 
     const handleFile = async (e) => {
       const f = e.target.files[0];
@@ -850,6 +1376,19 @@
     });
 
     document.getElementById("clearDatesBtn").addEventListener("click", () => { syncDateBounds(); renderAll(); });
+    document.getElementById("prevWeekBtn").addEventListener("click", () => {
+      if (selectedWeekIndex > 0) {
+        selectedWeekIndex -= 1;
+        renderAll();
+      }
+    });
+    document.getElementById("nextWeekBtn").addEventListener("click", () => {
+      const weekKeys = Array.from(new Set(allSets.map(r => getWeekKey(r.date)))).sort();
+      if (selectedWeekIndex < weekKeys.length - 1) {
+        selectedWeekIndex += 1;
+        renderAll();
+      }
+    });
     ["startDateInput", "endDateInput", "splitSelect", "minTargetInput", "maxTargetInput", "prSearch"].forEach(id => {
       document.getElementById(id).addEventListener("input", renderAll);
     });

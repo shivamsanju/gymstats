@@ -44,6 +44,67 @@ body {
   border-color: rgba(59, 130, 246, 0.5); /* blue-500 */
 }
 
+.adult-map {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 300px;
+  overflow: hidden;
+  padding: 0.25rem 0;
+}
+
+.simple-body-map {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 280px;
+  pointer-events: none;
+}
+
+.simple-body-map svg {
+  width: 100%;
+  max-width: 220px;
+  height: auto;
+  display: block;
+  opacity: 1;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
+}
+
+.simple-body-map svg * {
+  vector-effect: non-scaling-stroke;
+  pointer-events: auto;
+}
+
+.simple-body-map .body-map-label {
+  position: absolute;
+  left: 50%;
+  top: 6px;
+  transform: translateX(-50%);
+  background: rgba(12, 18, 28, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #e2e8f0;
+  white-space: nowrap;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.35);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.simple-body-map .body-map-label.visible {
+  opacity: 1;
+}
+
+.adult-map .simple-body-map {
+  width: 100%;
+}
+
 /* Mobile Safe Areas (Notches/Home Bars) */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   .pb-safe {

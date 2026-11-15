@@ -1,0 +1,58 @@
+{
+  "exercises": [
+    { "id": "ex-1", "name": "Bench Press", "muscle": "Chest", "equipment": "Barbell" },
+    { "id": "ex-2", "name": "Pull Up", "muscle": "Back", "equipment": "Bodyweight" },
+    { "id": "ex-3", "name": "Shoulder Press", "muscle": "Shoulders", "equipment": "Barbell" },
+    { "id": "ex-4", "name": "Barbell Row", "muscle": "Back", "equipment": "Barbell" },
+    { "id": "ex-5", "name": "Back Squat", "muscle": "Quadriceps", "equipment": "Barbell" },
+    { "id": "ex-6", "name": "Romanian Deadlift", "muscle": "Hamstrings", "equipment": "Barbell" },
+    { "id": "ex-7", "name": "Dumbbell Curl", "muscle": "Biceps", "equipment": "Dumbbell" },
+    { "id": "ex-8", "name": "Calf Raise", "muscle": "Calves", "equipment": "Dumbbell" }
+  ],
+  "workouts": [
+    {
+      "id": "wk-1",
+      "name": "Upper Push A",
+      "timestamp": 1762924800,
+      "endTimestamp": 1762928400,
+      "executions": [
+        { "exercise": { "id": "ex-1" }, "sets": [{ "reps": 8, "weight": 90 }, { "reps": 8, "weight": 90 }, { "reps": 7, "weight": 95 }] },
+        { "exercise": { "id": "ex-3" }, "sets": [{ "reps": 10, "weight": 45 }, { "reps": 8, "weight": 50 }] },
+        { "exercise": { "id": "ex-7" }, "sets": [{ "reps": 10, "weight": 25 }, { "reps": 10, "weight": 25 }] }
+      ]
+    },
+    {
+      "id": "wk-2",
+      "name": "Upper Pull A",
+      "timestamp": 1763450400,
+      "endTimestamp": 1763454000,
+      "executions": [
+        { "exercise": { "id": "ex-2" }, "sets": [{ "reps": 8, "weight": 0 }, { "reps": 8, "weight": 0 }, { "reps": 7, "weight": 0 }] },
+        { "exercise": { "id": "ex-4" }, "sets": [{ "reps": 8, "weight": 105 }, { "reps": 8, "weight": 105 }] },
+        { "exercise": { "id": "ex-7" }, "sets": [{ "reps": 10, "weight": 30 }, { "reps": 10, "weight": 30 }] }
+      ]
+    },
+    {
+      "id": "wk-3",
+      "name": "Lower Strength",
+      "timestamp": 1764135600,
+      "endTimestamp": 1764140400,
+      "executions": [
+        { "exercise": { "id": "ex-5" }, "sets": [{ "reps": 6, "weight": 135 }, { "reps": 6, "weight": 135 }, { "reps": 5, "weight": 145 }] },
+        { "exercise": { "id": "ex-6" }, "sets": [{ "reps": 8, "weight": 115 }, { "reps": 8, "weight": 115 }] },
+        { "exercise": { "id": "ex-8" }, "sets": [{ "reps": 15, "weight": 50 }, { "reps": 15, "weight": 50 }] }
+      ]
+    },
+    {
+      "id": "wk-4",
+      "name": "Push + Arms",
+      "timestamp": 1764740400,
+      "endTimestamp": 1764745200,
+      "executions": [
+        { "exercise": { "id": "ex-1" }, "sets": [{ "reps": 8, "weight": 95 }, { "reps": 8, "weight": 95 }] },
+        { "exercise": { "id": "ex-3" }, "sets": [{ "reps": 9, "weight": 50 }, { "reps": 9, "weight": 50 }] },
+        { "exercise": { "id": "ex-7" }, "sets": [{ "reps": 12, "weight": 25 }, { "reps": 12, "weight": 25 }] }
+      ]
+    }
+  ]
+}
