@@ -1,1 +1,98 @@
-hi
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: #000000;
+  /* Subtle ambient lighting effect */
+  background-image: 
+    radial-gradient(circle at 15% 50%, rgba(10, 132, 255, 0.08), transparent 40%),
+    radial-gradient(circle at 85% 30%, rgba(94, 92, 230, 0.08), transparent 40%);
+  background-attachment: fixed;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Base Glassmorphism Panel */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Glass Navigation / Sticky Header */
+.glass-nav {
+  background: rgba(10, 10, 10, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* Form Inputs */
+.glass-input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+}
+.glass-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+.glass-input:focus {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(59, 130, 246, 0.5); /* blue-500 */
+}
+
+/* Mobile Safe Areas (Notches/Home Bars) */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 8px);
+  }
+}
+
+/* Animations & Transitions for iOS Feel */
+.tab-btn {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.tab-btn:active {
+  transform: scale(0.92);
+  opacity: 0.8;
+}
+.tab-btn.active {
+  color: #60a5fa; /* blue-400 */
+}
+
+/* Desktop Top Tabs Specific overrides */
+nav .tab-btn:not(.active) {
+  color: #9ca3af; /* gray-400 */
+}
+nav .tab-btn:not(.active):hover {
+  color: #e5e7eb; /* gray-200 */
+  background: rgba(255, 255, 255, 0.05);
+}
+nav .tab-btn.active {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+}
+
+/* Hide Scrollbar globally for cleaner UI */
+::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+}
+* {
+  scrollbar-width: none;
+}
+
+/* Input Overrides */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.6;
+  cursor: pointer;
+}
+select option {
+  background-color: #1a1a1a;
+  color: #fff;
+}
