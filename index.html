@@ -1,314 +1,369 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Workout &amp; Muscle Analytics</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>GymStats</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <style>
-    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
-    .tab-btn.active { background-color: #0f4c5c; color: #ffffff; }
-    .tab-btn:not(.active) { color: #475569; }
-    .tab-btn:not(.active):hover { background-color: #e2e8f0; color: #0f172a; }
-  </style>
+  <link rel="stylesheet" href="style.css" />
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen antialiased">
+<body class="bg-black text-gray-100 min-h-screen antialiased selection:bg-blue-500/30 pb-24 md:pb-6">
+  
   <!-- Toast -->
-  <div id="toast" class="fixed bottom-4 right-4 z-50 hidden max-w-sm rounded-xl px-4 py-3 text-sm font-medium text-white shadow-lg transition-all"></div>
+  <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 hidden max-w-sm rounded-2xl px-5 py-3 text-sm font-medium text-white shadow-2xl transition-all glass-toast"></div>
 
   <!-- Paste Modal -->
-  <div id="pasteModal" class="fixed inset-0 z-40 hidden items-center justify-center bg-slate-900/50 p-4">
-    <div class="w-full max-w-xl rounded-2xl bg-white p-6 shadow-xl">
-      <div class="flex items-center justify-between mb-3">
-        <h3 class="text-lg font-bold text-slate-900">Paste CSV or .gkdb JSON</h3>
-        <button id="closePasteBtn" type="button" class="rounded-lg px-2 py-1 text-slate-500 hover:bg-slate-100">Close</button>
+  <div id="pasteModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <div class="w-full max-w-xl rounded-3xl glass-panel p-6 shadow-2xl transform transition-all">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-xl font-bold text-white tracking-tight">Paste Data</h3>
+        <button id="closePasteBtn" type="button" class="rounded-full p-2 text-gray-400 hover:bg-white/10 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
       </div>
-      <p class="text-xs text-slate-500 mb-3">Paste raw GymKing <code>.gkdb</code> JSON, GymKing CSV, or Lyfta CSV export text below.</p>
-      <textarea id="pasteInput" rows="8" class="w-full rounded-xl border border-slate-300 p-3 font-mono text-xs focus:border-teal-700 focus:outline-none" placeholder='{"workouts": [...], "exercises": [...]} or Title,Date,Duration,Exercise...'></textarea>
-      <div class="mt-4 flex justify-end gap-2">
-        <button id="cancelPasteBtn" type="button" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</button>
-        <button id="applyPasteBtn" type="button" class="rounded-xl bg-[#0f4c5c] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0c3d4a]">Load Data</button>
+      <p class="text-sm text-gray-400 mb-4">Paste raw GymKing <code>.gkdb</code> JSON, CSV, or Lyfta export below.</p>
+      <textarea id="pasteInput" rows="8" class="w-full rounded-2xl glass-input p-4 font-mono text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder='{"workouts": [...]} or Title,Date,Duration...'></textarea>
+      <div class="mt-5 flex justify-end gap-3">
+        <button id="cancelPasteBtn" type="button" class="rounded-xl px-5 py-2.5 text-sm font-medium text-gray-300 hover:bg-white/10 transition">Cancel</button>
+        <button id="applyPasteBtn" type="button" class="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 shadow-lg shadow-blue-500/30 transition">Load Data</button>
       </div>
     </div>
   </div>
 
   <!-- Header -->
-  <header class="bg-[#0f4c5c] text-white shadow-sm">
-    <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+  <header class="sticky top-0 z-40 glass-nav shadow-sm border-b border-white/10">
+    <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 flex flex-row items-center justify-between">
       <div>
-        <h1 class="text-xl font-bold tracking-tight">Workout &amp; Muscle Analytics</h1>
-        <p id="sourceBadge" class="text-xs text-teal-100 mt-0.5">No data loaded</p>
+        <h1 class="text-2xl font-extrabold tracking-tight text-white bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400">GymStats</h1>
+        <p id="sourceBadge" class="text-xs text-gray-400 mt-0.5 font-medium truncate max-w-[200px] sm:max-w-xs">No data loaded</p>
       </div>
-      <div class="flex flex-wrap items-center gap-2">
-        <label class="cursor-pointer rounded-xl bg-white/15 px-3 py-2 text-xs font-semibold text-white hover:bg-white/25 transition">
-          Upload .gkdb / .csv
+      <div class="flex items-center gap-2">
+        <label class="cursor-pointer rounded-full bg-white/10 p-2 text-white hover:bg-white/20 transition shadow-sm backdrop-blur-md">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
           <input id="fileInput" type="file" accept=".gkdb,.json,.csv,.txt" class="hidden" />
         </label>
-        <button id="openPasteBtn" type="button" class="rounded-xl bg-white/15 px-3 py-2 text-xs font-semibold text-white hover:bg-white/25 transition">Paste Data</button>
-        <button id="clearDataBtn" type="button" class="hidden rounded-xl bg-white/10 px-3 py-2 text-xs font-medium text-teal-100 hover:bg-white/20 transition">Clear Data</button>
+        <button id="openPasteBtn" type="button" class="rounded-full bg-white/10 p-2 text-white hover:bg-white/20 transition shadow-sm backdrop-blur-md hidden sm:block">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        </button>
+        <button id="clearDataBtn" type="button" class="hidden rounded-full bg-red-500/20 text-red-400 p-2 hover:bg-red-500/30 transition shadow-sm backdrop-blur-md">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        </button>
       </div>
     </div>
   </header>
 
-  <main class="mx-auto max-w-7xl px-3 py-4 sm:px-6 pb-24 md:pb-6 space-y-4">
-    <!-- Empty State / Insert Data Prompt -->
-    <section id="emptyStatePrompt" class="rounded-2xl bg-white p-6 sm:p-8 shadow-sm border border-slate-200 text-center space-y-5">
-      <div class="mx-auto max-w-md space-y-2">
-        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-50 text-[#0f4c5c] text-xl font-bold">📊</div>
-        <h2 class="text-lg font-bold text-slate-900">Insert Your Workout Data</h2>
-        <p class="text-xs sm:text-sm text-slate-500">Upload your latest <code>.gkdb</code> or <code>.csv</code> export, paste raw data, or load a remote URL to generate your training &amp; muscle analytics.</p>
+  <main class="mx-auto max-w-7xl px-4 py-6 sm:px-6 space-y-6">
+    <!-- Empty State -->
+    <section id="emptyStatePrompt" class="glass-panel rounded-3xl p-8 sm:p-12 text-center space-y-6 shadow-2xl mt-4 sm:mt-10">
+      <div class="mx-auto max-w-md space-y-4">
+        <div class="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-4xl shadow-[0_0_30px_rgba(59,130,246,0.2)]">
+          📊
+        </div>
+        <h2 class="text-2xl font-bold text-white tracking-tight">Track Your Gains</h2>
+        <p class="text-sm text-gray-400 leading-relaxed">Upload your latest <code>.gkdb</code> or <code>.csv</code> export, paste raw data, or sync a remote URL to view your iOS-style fitness dashboard.</p>
       </div>
-      <div class="flex flex-wrap justify-center gap-2.5">
-        <label class="cursor-pointer rounded-xl bg-[#0f4c5c] px-4 py-2.5 text-xs sm:text-sm font-semibold text-white hover:bg-[#0c3d4a] transition">
-          Choose .gkdb / .csv File
+      <div class="flex flex-col sm:flex-row justify-center gap-3">
+        <label class="cursor-pointer rounded-2xl bg-blue-600 px-6 py-3.5 text-sm font-semibold text-white hover:bg-blue-500 shadow-lg shadow-blue-500/30 transition-all flex items-center justify-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+          Choose File
           <input id="emptyFileInput" type="file" accept=".gkdb,.json,.csv,.txt" class="hidden" />
         </label>
-        <button id="emptyPasteBtn" type="button" class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50 transition">Paste CSV / JSON</button>
+        <button id="emptyPasteBtn" type="button" class="rounded-2xl glass-input px-6 py-3.5 text-sm font-semibold text-white hover:bg-white/10 transition-all flex items-center justify-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+          Paste Data
+        </button>
       </div>
-      <div class="mx-auto max-w-lg flex items-center gap-2 pt-1">
-        <input id="emptyUrlInput" type="url" placeholder="https://... (raw .gkdb or .csv URL)" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs sm:text-sm focus:border-[#0f4c5c] focus:outline-none" />
-        <button id="emptyLoadUrlBtn" type="button" class="shrink-0 rounded-xl bg-slate-800 px-4 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-slate-900 transition">Load URL</button>
+      <div class="mx-auto max-w-lg pt-4 flex gap-2">
+        <input id="emptyUrlInput" type="url" placeholder="https://... (Remote URL)" class="w-full rounded-2xl glass-input px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+        <button id="emptyLoadUrlBtn" type="button" class="shrink-0 rounded-2xl bg-white/10 px-5 py-3 text-sm font-semibold text-white hover:bg-white/20 transition border border-white/5">Sync</button>
       </div>
     </section>
 
-    <div id="dashboardContent" class="hidden space-y-4">
-    <!-- Mobile Toggle for Data & Filters -->
-    <div class="flex items-center justify-between md:hidden">
-      <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Dashboard</span>
-      <button id="toggleControlsBtn" type="button" class="rounded-xl bg-white border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm active:bg-slate-100">Data &amp; Filters ▾</button>
-    </div>
-
-    <!-- Data Source Connector & Filters -->
-    <section id="controlsPanel" class="hidden md:block rounded-2xl bg-white p-4 shadow-sm border border-slate-200 space-y-3">
-      <div class="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
-        <div class="flex flex-1 items-center gap-2">
-          <input id="urlInput" type="url" placeholder="https://... (raw .gkdb or .csv URL for remote/Shortcut sync)" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs focus:border-[#0f4c5c] focus:outline-none" />
-          <button id="loadUrlBtn" type="button" class="shrink-0 rounded-xl bg-[#0f4c5c] px-4 py-2 text-xs font-semibold text-white hover:bg-[#0c3d4a] transition">Load URL</button>
-        </div>
-        <div id="dropZone" class="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-2 text-center text-xs text-slate-500">
-          Drop <code>.gkdb</code> or <code>.csv</code> here to update charts
-        </div>
+    <div id="dashboardContent" class="hidden space-y-6">
+      <!-- Data & Filters Header -->
+      <div class="flex items-center justify-between md:hidden px-1">
+        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Dashboard</span>
+        <button id="toggleControlsBtn" type="button" class="rounded-full bg-white/5 border border-white/10 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-white/10 flex items-center gap-1 backdrop-blur-md transition">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+          Filters
+        </button>
       </div>
 
-      <div class="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-100 text-xs">
-        <div class="flex flex-wrap items-center gap-1.5">
-          <span class="font-semibold text-slate-600">From:</span>
-          <input id="startDateInput" type="date" class="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs" />
-          <span class="font-semibold text-slate-600 ml-1">To:</span>
-          <input id="endDateInput" type="date" class="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs" />
-          <button id="clearDatesBtn" type="button" class="rounded-lg border border-slate-300 bg-slate-50 px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100">All Dates</button>
+      <!-- Controls Panel (Filters) -->
+      <section id="controlsPanel" class="hidden md:block glass-panel rounded-3xl p-5 space-y-4 shadow-lg transform transition-all duration-300">
+        <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div class="flex flex-1 items-center gap-2">
+            <input id="urlInput" type="url" placeholder="https://... (Sync Shortcut URL)" class="w-full rounded-xl glass-input px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+            <button id="loadUrlBtn" type="button" class="shrink-0 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 transition shadow-lg shadow-blue-500/20">Load</button>
+          </div>
+          <div id="dropZone" class="hidden lg:flex rounded-xl border border-dashed border-white/20 bg-white/5 px-6 py-2.5 text-center text-xs text-gray-400 items-center justify-center transition-colors">
+            Drop .gkdb or .csv here
+          </div>
         </div>
-        <div class="flex items-center gap-1.5">
-          <span class="font-semibold text-slate-600">Split:</span>
-          <select id="splitSelect" class="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs">
+
+        <div class="flex flex-wrap items-center gap-3 pt-3 border-t border-white/10 text-sm">
+          <div class="flex items-center gap-2 bg-white/5 rounded-xl p-1 border border-white/5">
+            <input id="startDateInput" type="date" class="rounded-lg bg-transparent border-none text-white px-2 py-1 text-sm focus:ring-0 cursor-pointer" />
+            <span class="text-gray-500">→</span>
+            <input id="endDateInput" type="date" class="rounded-lg bg-transparent border-none text-white px-2 py-1 text-sm focus:ring-0 cursor-pointer" />
+            <button id="clearDatesBtn" type="button" class="rounded-lg hover:bg-white/10 px-2.5 py-1.5 text-xs font-medium text-gray-300 transition">All</button>
+          </div>
+          
+          <select id="splitSelect" class="rounded-xl glass-input px-4 py-2 text-sm font-medium focus:ring-2 focus:ring-blue-500 cursor-pointer">
             <option value="ALL">All Splits</option>
           </select>
-        </div>
-        <div class="flex items-center gap-1.5">
-          <span class="font-semibold text-slate-600">Optimal Sets/Wk:</span>
-          <input id="minTargetInput" type="number" min="1" max="20" value="8" class="w-14 rounded-lg border border-slate-300 px-2 py-1 text-center text-xs" />
-          <span class="text-slate-400">to</span>
-          <input id="maxTargetInput" type="number" min="4" max="35" value="16" class="w-14 rounded-lg border border-slate-300 px-2 py-1 text-center text-xs" />
-        </div>
-      </div>
-    </section>
 
-    <!-- Navigation Tabs -->
-    <nav class="hidden md:flex flex-wrap gap-1.5 rounded-2xl bg-slate-200/70 p-1.5">
-      <button type="button" data-tab="overview" class="tab-btn active rounded-xl px-3.5 py-2 text-xs font-semibold transition">Overview</button>
-      <button type="button" data-tab="muscles" class="tab-btn rounded-xl px-3.5 py-2 text-xs font-semibold transition">Muscle Balance</button>
-      <button type="button" data-tab="prs" class="tab-btn rounded-xl px-3.5 py-2 text-xs font-semibold transition">Personal Records</button>
-      <button type="button" data-tab="log" class="tab-btn rounded-xl px-3.5 py-2 text-xs font-semibold transition">Workout Log</button>
-      <button type="button" data-tab="shortcut" class="tab-btn rounded-xl px-3.5 py-2 text-xs font-semibold transition">iOS Shortcut Guide</button>
-    </nav>
+          <div class="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-1.5 border border-white/5">
+            <span class="text-xs font-medium text-gray-400">Sets/Wk:</span>
+            <input id="minTargetInput" type="number" min="1" max="20" value="8" class="w-12 bg-transparent text-center text-sm font-semibold text-white focus:outline-none" />
+            <span class="text-gray-600">-</span>
+            <input id="maxTargetInput" type="number" min="4" max="35" value="16" class="w-12 bg-transparent text-center text-sm font-semibold text-white focus:outline-none" />
+          </div>
+        </div>
+      </section>
 
-    <!-- KPI Strip -->
-    <section class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-      <div class="rounded-2xl bg-white p-4 shadow-sm border border-slate-200">
-        <p class="text-xs font-medium text-slate-500">Workouts</p>
-        <p id="kpiWorkouts" class="mt-1 text-2xl font-extrabold text-slate-900">0</p>
-      </div>
-      <div class="rounded-2xl bg-white p-4 shadow-sm border border-slate-200">
-        <p class="text-xs font-medium text-slate-500">Total Sets</p>
-        <p id="kpiSets" class="mt-1 text-2xl font-extrabold text-slate-900">0</p>
-      </div>
-      <div class="rounded-2xl bg-white p-4 shadow-sm border border-slate-200">
-        <p class="text-xs font-medium text-slate-500">Total Volume</p>
-        <p id="kpiVolume" class="mt-1 text-2xl font-extrabold text-[#0f4c5c]">0 kg</p>
-      </div>
-      <div class="rounded-2xl bg-white p-4 shadow-sm border border-slate-200">
-        <p class="text-xs font-medium text-slate-500">Heaviest Lift</p>
-        <p id="kpiMaxWeight" class="mt-1 text-2xl font-extrabold text-slate-900">0 kg</p>
-      </div>
-      <div class="rounded-2xl bg-white p-4 shadow-sm border border-slate-200 col-span-2 sm:col-span-1">
-        <p class="text-xs font-medium text-slate-500">Avg Duration</p>
-        <p id="kpiAvgDur" class="mt-1 text-2xl font-extrabold text-slate-900">0 min</p>
-      </div>
-    </section>
+      <!-- Desktop Navigation Tabs -->
+      <nav class="hidden md:flex gap-2 rounded-2xl bg-white/5 p-1.5 backdrop-blur-md border border-white/10 w-fit shadow-lg">
+        <button type="button" data-tab="overview" class="tab-btn active rounded-xl px-5 py-2 text-sm font-medium transition-all">Overview</button>
+        <button type="button" data-tab="muscles" class="tab-btn rounded-xl px-5 py-2 text-sm font-medium transition-all">Muscles</button>
+        <button type="button" data-tab="prs" class="tab-btn rounded-xl px-5 py-2 text-sm font-medium transition-all">Records</button>
+        <button type="button" data-tab="log" class="tab-btn rounded-xl px-5 py-2 text-sm font-medium transition-all">Log</button>
+        <button type="button" data-tab="shortcut" class="tab-btn rounded-xl px-5 py-2 text-sm font-medium transition-all">Sync iOS</button>
+      </nav>
 
-    <!-- TAB 1: Overview -->
-    <section id="tab-overview" class="tab-panel space-y-4">
-      <!-- Training Improvement Insights -->
-      <div class="rounded-2xl bg-white p-4 sm:p-5 shadow-sm border border-slate-200 space-y-3">
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <h2 class="text-sm font-bold text-slate-900">How to Improve Your Training</h2>
-          <span id="balanceRatioBadge" class="rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-[#0f4c5c]">Analyzing...</span>
+      <!-- KPI Strip -->
+      <section class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+        <div class="glass-panel rounded-3xl p-5 shadow-lg relative overflow-hidden group">
+          <div class="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">Workouts</p>
+          <p id="kpiWorkouts" class="mt-2 text-3xl font-extrabold text-white">0</p>
         </div>
-        <div id="coachingInsights" class="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3 text-xs"></div>
-      </div>
-      <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <div class="rounded-2xl bg-white p-5 shadow-sm border border-slate-200">
-          <h2 class="text-sm font-bold text-slate-800 mb-3">Volume by Split (kg)</h2>
-          <div class="relative h-72"><canvas id="splitVolumeChart"></canvas></div>
+        <div class="glass-panel rounded-3xl p-5 shadow-lg relative overflow-hidden group">
+          <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">Sets</p>
+          <p id="kpiSets" class="mt-2 text-3xl font-extrabold text-white">0</p>
         </div>
-        <div class="rounded-2xl bg-white p-5 shadow-sm border border-slate-200">
-          <h2 class="text-sm font-bold text-slate-800 mb-3">Weekly Training Volume (kg)</h2>
-          <div class="relative h-72"><canvas id="weeklyVolumeChart"></canvas></div>
+        <div class="glass-panel rounded-3xl p-5 shadow-lg relative overflow-hidden group">
+          <div class="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">Volume</p>
+          <p id="kpiVolume" class="mt-2 text-3xl font-extrabold text-blue-400 drop-shadow-[0_0_10px_rgba(59,130,246,0.3)]">0 kg</p>
         </div>
-      </div>
-      <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <div class="rounded-2xl bg-white p-5 shadow-sm border border-slate-200">
-          <h2 class="text-sm font-bold text-slate-800 mb-3">Sessions &amp; Sets by Split</h2>
-          <div class="relative h-72"><canvas id="splitSetsChart"></canvas></div>
+        <div class="glass-panel rounded-3xl p-5 shadow-lg relative overflow-hidden group">
+          <div class="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">Top Weight</p>
+          <p id="kpiMaxWeight" class="mt-2 text-3xl font-extrabold text-white">0 kg</p>
         </div>
-        <div class="rounded-2xl bg-white p-5 shadow-sm border border-slate-200">
-          <h2 class="text-sm font-bold text-slate-800 mb-3">Sets by Equipment</h2>
-          <div class="relative h-72"><canvas id="equipmentChart"></canvas></div>
+        <div class="glass-panel rounded-3xl p-5 shadow-lg col-span-2 sm:col-span-1 relative overflow-hidden group">
+          <div class="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">Avg Time</p>
+          <p id="kpiAvgDur" class="mt-2 text-3xl font-extrabold text-white">0 min</p>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- TAB 2: Muscle Balance -->
-    <section id="tab-muscles" class="tab-panel hidden space-y-5">
-      <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div class="rounded-2xl bg-rose-50 border border-rose-200 p-4">
-          <p class="text-xs font-bold uppercase tracking-wide text-rose-700">Needs Attention (Undertrained)</p>
-          <p id="undertrainedList" class="mt-1.5 text-sm font-medium text-rose-900">-</p>
+      <!-- TAB 1: Overview -->
+      <section id="tab-overview" class="tab-panel space-y-6">
+        <!-- AI Insights -->
+        <div class="glass-panel rounded-3xl p-5 sm:p-6 shadow-lg relative overflow-hidden">
+          <div class="absolute -top-24 -right-24 w-48 h-48 bg-blue-500/20 rounded-full blur-3xl"></div>
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 relative z-10">
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+              <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+              Training Insights
+            </h2>
+            <span id="balanceRatioBadge" class="rounded-full bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 text-xs font-semibold text-blue-300 backdrop-blur-md">Analyzing...</span>
+          </div>
+          <div id="coachingInsights" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 relative z-10"></div>
         </div>
-        <div class="rounded-2xl bg-emerald-50 border border-emerald-200 p-4">
-          <p class="text-xs font-bold uppercase tracking-wide text-emerald-700">Optimal Weekly Volume</p>
-          <p id="optimalList" class="mt-1.5 text-sm font-medium text-emerald-900">-</p>
-        </div>
-        <div class="rounded-2xl bg-amber-50 border border-amber-200 p-4">
-          <p class="text-xs font-bold uppercase tracking-wide text-amber-700">High / Watch Overtraining</p>
-          <p id="overtrainedList" class="mt-1.5 text-sm font-medium text-amber-900">-</p>
-        </div>
-      </div>
 
-      <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <div class="rounded-2xl bg-white p-5 shadow-sm border border-slate-200">
-          <h2 class="text-sm font-bold text-slate-800 mb-3">Total Sets by Muscle Group</h2>
-          <div class="relative h-72"><canvas id="muscleSetsChart"></canvas></div>
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div class="glass-panel rounded-3xl p-5 sm:p-6 shadow-lg">
+            <h2 class="text-sm font-bold text-gray-200 mb-4 tracking-wide uppercase">Volume by Split (kg)</h2>
+            <div class="relative h-64"><canvas id="splitVolumeChart"></canvas></div>
+          </div>
+          <div class="glass-panel rounded-3xl p-5 sm:p-6 shadow-lg">
+            <h2 class="text-sm font-bold text-gray-200 mb-4 tracking-wide uppercase">Weekly Volume (kg)</h2>
+            <div class="relative h-64"><canvas id="weeklyVolumeChart"></canvas></div>
+          </div>
         </div>
-        <div class="rounded-2xl bg-white p-5 shadow-sm border border-slate-200">
-          <h2 class="text-sm font-bold text-slate-800 mb-3">Avg Weekly Sets vs Optimal Range</h2>
-          <div class="relative h-72"><canvas id="muscleWeeklyChart"></canvas></div>
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div class="glass-panel rounded-3xl p-5 sm:p-6 shadow-lg">
+            <h2 class="text-sm font-bold text-gray-200 mb-4 tracking-wide uppercase">Sets by Split</h2>
+            <div class="relative h-64"><canvas id="splitSetsChart"></canvas></div>
+          </div>
+          <div class="glass-panel rounded-3xl p-5 sm:p-6 shadow-lg">
+            <h2 class="text-sm font-bold text-gray-200 mb-4 tracking-wide uppercase">Equipment Profile</h2>
+            <div class="relative h-64"><canvas id="equipmentChart"></canvas></div>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div class="rounded-2xl bg-white p-5 shadow-sm border border-slate-200 overflow-x-auto">
-        <h2 class="text-sm font-bold text-slate-800 mb-3">Muscle Group Breakdown</h2>
-        <table class="w-full text-left text-xs">
-          <thead>
-            <tr class="border-b border-slate-200 text-slate-500 uppercase">
-              <th class="py-2 pr-4">Muscle Group</th>
-              <th class="py-2 px-3 text-right">Total Sets</th>
-              <th class="py-2 px-3 text-right">Avg Sets / Wk</th>
-              <th class="py-2 px-3 text-right">Total Volume (kg)</th>
-              <th class="py-2 px-3 text-right">% Share</th>
-              <th class="py-2 pl-3">Training Status</th>
-            </tr>
-          </thead>
-          <tbody id="muscleTableBody" class="divide-y divide-slate-100"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- TAB 3: Personal Records -->
-    <section id="tab-prs" class="tab-panel hidden space-y-5">
-      <div class="rounded-2xl bg-white p-5 shadow-sm border border-slate-200">
-        <h2 class="text-sm font-bold text-slate-800 mb-3">Top 10 Exercises by Max Weight (kg)</h2>
-        <div class="relative h-72"><canvas id="prChart"></canvas></div>
-      </div>
-      <div class="rounded-2xl bg-white p-5 shadow-sm border border-slate-200 space-y-3 overflow-x-auto">
-        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <h2 class="text-sm font-bold text-slate-800">All Exercise Personal Records</h2>
-          <input id="prSearch" type="text" placeholder="Filter exercise..." class="rounded-xl border border-slate-300 px-3 py-1.5 text-xs focus:border-[#0f4c5c] focus:outline-none" />
+      <!-- TAB 2: Muscles -->
+      <section id="tab-muscles" class="tab-panel hidden space-y-6">
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div class="rounded-3xl bg-red-500/10 border border-red-500/20 p-5 backdrop-blur-md">
+            <p class="text-xs font-bold uppercase tracking-wider text-red-400">Needs Attention</p>
+            <p id="undertrainedList" class="mt-2 text-sm font-medium text-red-200 leading-relaxed">-</p>
+          </div>
+          <div class="rounded-3xl bg-green-500/10 border border-green-500/20 p-5 backdrop-blur-md">
+            <p class="text-xs font-bold uppercase tracking-wider text-green-400">Optimal Volume</p>
+            <p id="optimalList" class="mt-2 text-sm font-medium text-green-200 leading-relaxed">-</p>
+          </div>
+          <div class="rounded-3xl bg-orange-500/10 border border-orange-500/20 p-5 backdrop-blur-md">
+            <p class="text-xs font-bold uppercase tracking-wider text-orange-400">High Volume</p>
+            <p id="overtrainedList" class="mt-2 text-sm font-medium text-orange-200 leading-relaxed">-</p>
+          </div>
         </div>
-        <table class="w-full text-left text-xs">
-          <thead>
-            <tr class="border-b border-slate-200 text-slate-500 uppercase">
-              <th class="py-2 pr-4">Exercise</th>
-              <th class="py-2 px-3">Muscle</th>
-              <th class="py-2 px-3 text-right">Max Weight (kg)</th>
-              <th class="py-2 px-3 text-right">Est. 1RM (kg)</th>
-              <th class="py-2 px-3 text-right">Total Sets</th>
-              <th class="py-2 pl-3 text-right">Total Volume (kg)</th>
-            </tr>
-          </thead>
-          <tbody id="prTableBody" class="divide-y divide-slate-100"></tbody>
-        </table>
-      </div>
-      <div class="rounded-2xl bg-white p-4 sm:p-5 shadow-sm border border-slate-200 overflow-x-auto">
-        <h2 class="text-sm font-bold text-slate-800 mb-1">Progressive Overload Status (Recent vs Prior)</h2>
-        <p class="text-xs text-slate-500 mb-3">Compares your latest session max weight/volume against your earlier average for each lift.</p>
-        <table class="w-full text-left text-xs">
-          <thead>
-            <tr class="border-b border-slate-200 text-slate-500 uppercase">
-              <th class="py-2 pr-3">Exercise</th>
-              <th class="py-2 px-2 text-right">Prior Avg (kg)</th>
-              <th class="py-2 px-2 text-right">Latest (kg)</th>
-              <th class="py-2 pl-2">Trend</th>
-            </tr>
-          </thead>
-          <tbody id="overloadTableBody" class="divide-y divide-slate-100"></tbody>
-        </table>
-      </div>
-    </section>
 
-    <!-- TAB 4: Workout Log -->
-    <section id="tab-log" class="tab-panel hidden space-y-4">
-      <div id="workoutLogList" class="space-y-3"></div>
-    </section>
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div class="glass-panel rounded-3xl p-5 sm:p-6 shadow-lg">
+            <h2 class="text-sm font-bold text-gray-200 mb-4 tracking-wide uppercase">Sets by Muscle Group</h2>
+            <div class="relative h-72"><canvas id="muscleSetsChart"></canvas></div>
+          </div>
+          <div class="glass-panel rounded-3xl p-5 sm:p-6 shadow-lg">
+            <h2 class="text-sm font-bold text-gray-200 mb-4 tracking-wide uppercase">Weekly Avg vs Targets</h2>
+            <div class="relative h-72"><canvas id="muscleWeeklyChart"></canvas></div>
+          </div>
+        </div>
 
-    <!-- TAB 5: iOS Shortcut Guide -->
-    <section id="tab-shortcut" class="tab-panel hidden rounded-2xl bg-white p-6 shadow-sm border border-slate-200 space-y-4 text-sm text-slate-700">
-      <h2 class="text-base font-bold text-slate-900">Connecting Your iOS Shortcut or Database Export</h2>
-      <p>This app runs entirely in your browser and supports three ways to swap in your latest workout data:</p>
-      <ol class="list-decimal pl-5 space-y-2 text-xs sm:text-sm">
-        <li><strong>Direct File Upload / Drag &amp; Drop:</strong> Tap <em>Upload .gkdb / .csv</em> and pick your latest GymKing <code>.gkdb</code> or <code>.csv</code> (or Lyfta <code>.csv</code>) export from the Files app.</li>
-        <li><strong>Automated URL Sync via iOS Shortcuts:</strong> Host your latest export at a public <code>https://</code> link (e.g., GitHub raw or Dropbox direct link) and open this app with <code>?data=YOUR_HTTPS_URL</code>, or paste the URL into the box above and tap <em>Load URL</em>.</li>
-        <li><strong>Clipboard / Share Sheet:</strong> In your iOS Shortcut, copy the latest CSV/JSON text to the clipboard, tap <em>Paste Data</em>, and paste it in.</li>
-      </ol>
-      <p class="text-xs text-slate-500">Your most recently loaded dataset is saved locally in your browser so it persists across reloads.</p>
-    </section>
+        <div class="glass-panel rounded-3xl p-5 sm:p-6 shadow-lg overflow-hidden">
+          <h2 class="text-sm font-bold text-gray-200 mb-4 tracking-wide uppercase">Detailed Breakdown</h2>
+          <div class="overflow-x-auto -mx-5 px-5 sm:mx-0 sm:px-0">
+            <table class="w-full text-left text-sm whitespace-nowrap">
+              <thead>
+                <tr class="border-b border-white/10 text-gray-400 uppercase text-xs tracking-wider">
+                  <th class="py-3 pr-4 font-semibold">Muscle</th>
+                  <th class="py-3 px-3 text-right font-semibold">Sets</th>
+                  <th class="py-3 px-3 text-right font-semibold">Sets/Wk</th>
+                  <th class="py-3 px-3 text-right font-semibold">Volume (kg)</th>
+                  <th class="py-3 px-3 text-right font-semibold">% Share</th>
+                  <th class="py-3 pl-4 font-semibold text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody id="muscleTableBody" class="divide-y divide-white/5"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: PRs -->
+      <section id="tab-prs" class="tab-panel hidden space-y-6">
+        <div class="glass-panel rounded-3xl p-5 sm:p-6 shadow-lg">
+          <h2 class="text-sm font-bold text-gray-200 mb-4 tracking-wide uppercase">Top Exercises (Max Weight)</h2>
+          <div class="relative h-72"><canvas id="prChart"></canvas></div>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="glass-panel rounded-3xl p-5 sm:p-6 shadow-lg flex flex-col h-full">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+              <h2 class="text-sm font-bold text-gray-200 tracking-wide uppercase">All Records</h2>
+              <input id="prSearch" type="text" placeholder="Search..." class="rounded-full glass-input px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 w-full sm:w-48" />
+            </div>
+            <div class="overflow-x-auto flex-1 -mx-5 px-5 sm:mx-0 sm:px-0">
+              <table class="w-full text-left text-sm whitespace-nowrap">
+                <thead>
+                  <tr class="border-b border-white/10 text-gray-400 uppercase text-xs tracking-wider">
+                    <th class="py-2 pr-4 font-semibold">Exercise</th>
+                    <th class="py-2 px-3 text-right font-semibold">Max (kg)</th>
+                    <th class="py-2 px-3 text-right font-semibold">E1RM</th>
+                    <th class="py-2 px-3 text-right font-semibold">Vol (kg)</th>
+                  </tr>
+                </thead>
+                <tbody id="prTableBody" class="divide-y divide-white/5"></tbody>
+              </table>
+            </div>
+          </div>
+          
+          <div class="glass-panel rounded-3xl p-5 sm:p-6 shadow-lg flex flex-col h-full">
+            <h2 class="text-sm font-bold text-gray-200 tracking-wide uppercase mb-1">Overload Trend</h2>
+            <p class="text-xs text-gray-400 mb-5">Latest weight vs historical average.</p>
+            <div class="overflow-x-auto flex-1 -mx-5 px-5 sm:mx-0 sm:px-0">
+              <table class="w-full text-left text-sm whitespace-nowrap">
+                <thead>
+                  <tr class="border-b border-white/10 text-gray-400 uppercase text-xs tracking-wider">
+                    <th class="py-2 pr-3 font-semibold">Exercise</th>
+                    <th class="py-2 px-2 text-right font-semibold">Prior</th>
+                    <th class="py-2 px-2 text-right font-semibold">Latest</th>
+                    <th class="py-2 pl-3 font-semibold text-center">Trend</th>
+                  </tr>
+                </thead>
+                <tbody id="overloadTableBody" class="divide-y divide-white/5"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: Log -->
+      <section id="tab-log" class="tab-panel hidden space-y-4">
+        <div id="workoutLogList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+      </section>
+
+      <!-- TAB 5: Sync -->
+      <section id="tab-shortcut" class="tab-panel hidden glass-panel rounded-3xl p-6 sm:p-8 shadow-lg space-y-5 text-gray-300 text-sm leading-relaxed relative overflow-hidden">
+        <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-indigo-500/20 rounded-full blur-3xl"></div>
+        <h2 class="text-xl font-bold text-white relative z-10">iOS Sync & Data Connection</h2>
+        <p class="relative z-10">This dashboard runs locally in your browser. Update data securely through three native-feeling methods:</p>
+        <ol class="list-decimal pl-5 space-y-4 relative z-10">
+          <li class="pl-2">
+            <strong class="text-white">Direct Upload:</strong> Tap the file icon in the top right to select your <code>.gkdb</code> or <code>.csv</code> from iOS Files.
+          </li>
+          <li class="pl-2">
+            <strong class="text-white">Shortcuts Automation (Pro):</strong> Host your export on iCloud Drive/Dropbox. Create a shortcut that grabs the file content and opens Safari with a Data URI, or pass a public URL via <code>?data=URL</code>.
+          </li>
+          <li class="pl-2">
+            <strong class="text-white">Clipboard Sync:</strong> Copy your JSON/CSV text on your phone, tap the paste icon, and load it instantly.
+          </li>
+        </ol>
+        <p class="text-xs text-gray-500 mt-4 border-t border-white/10 pt-4 relative z-10">Your dataset persists in local memory during your session.</p>
+      </section>
     </div>
   </main>
 
-  <!-- Mobile Bottom Navigation -->
-  <nav id="mobileBottomNav" class="hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur border-t border-slate-200 flex justify-around py-1.5 px-1 md:hidden">
-    <button type="button" data-tab="overview" class="tab-btn active flex-1 rounded-xl py-2 text-[11px] font-semibold text-center">Insights</button>
-    <button type="button" data-tab="muscles" class="tab-btn flex-1 rounded-xl py-2 text-[11px] font-semibold text-center">Muscles</button>
-    <button type="button" data-tab="prs" class="tab-btn flex-1 rounded-xl py-2 text-[11px] font-semibold text-center">PRs</button>
-    <button type="button" data-tab="log" class="tab-btn flex-1 rounded-xl py-2 text-[11px] font-semibold text-center">Log</button>
-    <button type="button" data-tab="shortcut" class="tab-btn flex-1 rounded-xl py-2 text-[11px] font-semibold text-center">Sync</button>
+  <!-- Mobile Bottom Nav -->
+  <nav id="mobileBottomNav" class="hidden fixed bottom-0 inset-x-0 z-40 glass-nav border-t border-white/10 pb-safe pt-2 px-2 md:hidden">
+    <div class="flex justify-around items-center h-14">
+      <button type="button" data-tab="overview" class="tab-btn active flex-1 flex flex-col items-center justify-center gap-1 w-full h-full rounded-2xl">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        <span class="text-[10px] font-semibold">Home</span>
+      </button>
+      <button type="button" data-tab="muscles" class="tab-btn flex-1 flex flex-col items-center justify-center gap-1 w-full h-full rounded-2xl">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        <span class="text-[10px] font-semibold">Muscles</span>
+      </button>
+      <button type="button" data-tab="prs" class="tab-btn flex-1 flex flex-col items-center justify-center gap-1 w-full h-full rounded-2xl">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M19 3v4M5 11h14M5 11c0 3.866 3.134 7 7 7s7-3.134 7-7M5 11a4 4 0 01-4-4V5h4m14 6a4 4 0 004-4V5h-4m-4 10v4m-4 0h8"/></svg>
+        <span class="text-[10px] font-semibold">Records</span>
+      </button>
+      <button type="button" data-tab="log" class="tab-btn flex-1 flex flex-col items-center justify-center gap-1 w-full h-full rounded-2xl">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+        <span class="text-[10px] font-semibold">Log</span>
+      </button>
+      <button type="button" data-tab="shortcut" class="tab-btn flex-1 flex flex-col items-center justify-center gap-1 w-full h-full rounded-2xl">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065zM15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        <span class="text-[10px] font-semibold">Settings</span>
+      </button>
+    </div>
   </nav>
 
   <script>
-    const DEFAULT_GKDB = { exercises: [], workouts: [] };
+    // Theme configurations for Chart.js
+    Chart.defaults.color = '#9ca3af';
+    Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.05)';
+    Chart.defaults.font.family = "'Inter', sans-serif";
 
+    const DEFAULT_GKDB = { exercises: [], workouts: [] };
     let allSets = [];
-    let currentSourceLabel = "Default: gymking_export_2026-11-14_updated.gkdb";
+    let currentSourceLabel = "Default Setup";
     const charts = {};
 
     function showToast(msg, isError = false) {
       const el = document.getElementById("toast");
       el.textContent = msg;
-      el.className = "fixed bottom-4 right-4 z-50 max-w-sm rounded-xl px-4 py-3 text-sm font-medium text-white shadow-lg " + (isError ? "bg-rose-600" : "bg-[#0f4c5c]");
+      el.className = `fixed top-4 left-1/2 -translate-x-1/2 z-[60] max-w-sm rounded-2xl px-5 py-3 text-sm font-medium text-white shadow-2xl transition-all glass-toast ${isError ? 'bg-red-500/80 border border-red-500/50' : 'bg-blue-600/80 border border-blue-500/50'}`;
       el.classList.remove("hidden");
       setTimeout(() => el.classList.add("hidden"), 3500);
     }
@@ -327,8 +382,6 @@
       (obj.workouts || []).forEach(w => {
         const ts = w.timestamp || 0;
         const endTs = w.endTimestamp || ts;
-        const dt = new Date(ts * 1000);
-        // Format in IST (+05:30) or local ISO date
         const istOffsetMs = 5.5 * 3600 * 1000;
         const dtIst = new Date(ts * 1000 + istOffsetMs);
         const dateStr = dtIst.toISOString().slice(0, 10);
@@ -336,7 +389,7 @@
         (w.executions || []).forEach(ex => {
           const ref = ex.exercise || {};
           const meta = exMap[ref.id] || {};
-          const exName = ref.name || meta.name || "Unknown Exercise";
+          const exName = ref.name || meta.name || "Unknown";
           const muscle = meta.muscle || "Other";
           const equip = normEquip(meta.equipment || "Other");
           (ex.sets || []).forEach((s, idx) => {
@@ -360,58 +413,45 @@
 
     function parseCsvLine(line) {
       const out = [];
-      let cur = "";
-      let inQuotes = false;
+      let cur = "", inQuotes = false;
       for (let i = 0; i < line.length; i++) {
         const ch = line[i];
         if (ch === '"') {
           if (inQuotes && line[i + 1] === '"') { cur += '"'; i++; }
           else inQuotes = !inQuotes;
         } else if (ch === ',' && !inQuotes) {
-          out.push(cur.trim());
-          cur = "";
-        } else {
-          cur += ch;
-        }
+          out.push(cur.trim()); cur = "";
+        } else cur += ch;
       }
-      out.push(cur.trim());
-      return out;
+      out.push(cur.trim()); return out;
     }
 
     function parseCsv(text) {
-      const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+      const lines = text.split(/
+?
+/).filter(l => l.trim().length > 0);
       if (lines.length < 2) return [];
       const headers = parseCsvLine(lines[0]).map(h => h.toLowerCase().trim());
-      const exMetaByName = {};
-      (DEFAULT_GKDB.exercises || []).forEach(e => { exMetaByName[e.name.toLowerCase()] = e; });
-
       const rows = [];
       for (let i = 1; i < lines.length; i++) {
         const cols = parseCsvLine(lines[i]);
-        const rec = {};
-        headers.forEach((h, idx) => { rec[h] = cols[idx] ?? ""; });
-
-        // Support both GymKing CSV and Lyfta CSV
+        const rec = {}; headers.forEach((h, idx) => { rec[h] = cols[idx] ?? ""; });
         const exName = rec.exercise_name || rec.exercise || "Unknown";
-        const meta = exMetaByName[exName.toLowerCase()] || {};
-        const dateRaw = rec.date || "";
-        const dateStr = dateRaw.slice(0, 10);
+        const dateStr = (rec.date || "").slice(0, 10);
         if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) continue;
-
         let durMin = Number(rec.duration_minutes || 0);
         if (!durMin && rec.duration && rec.duration.includes(":")) {
           const parts = rec.duration.split(":").map(Number);
           durMin = Math.round(((parts[0] || 0) * 60 + (parts[1] || 0) + (parts[2] || 0) / 60) * 10) / 10;
         }
-
         rows.push({
           workout_id: rec.workout_id || (dateStr + "_" + (rec.title || rec.workout_name || "")),
           workout_name: rec.workout_name || rec.title || "Workout",
           date: dateStr,
           duration_minutes: durMin,
           exercise_name: exName,
-          muscle: rec.muscle || meta.muscle || "Other",
-          equipment: normEquip(rec.equipment || meta.equipment || "Other"),
+          muscle: rec.muscle || "Other",
+          equipment: normEquip(rec.equipment || "Other"),
           set_number: Number(rec.set_number || i),
           reps: Number(rec.reps || 0),
           weight_kg: Number(rec.weight_kg || rec.weight || 0),
@@ -423,37 +463,41 @@
     function loadRawText(text, label) {
       const trimmed = text.trim();
       let parsed = [];
-      if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
-        const obj = JSON.parse(trimmed);
-        parsed = Array.isArray(obj) ? obj : parseGkdb(obj);
-      } else {
-        parsed = parseCsv(trimmed);
+      try {
+        if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+          const obj = JSON.parse(trimmed);
+          parsed = Array.isArray(obj) ? obj : parseGkdb(obj);
+        } else {
+          parsed = parseCsv(trimmed);
+        }
+      } catch(e) {
+        showToast("Error parsing data format.", true); return false;
       }
+      
       if (!parsed.length) {
-        showToast("No valid workout rows found in that file.", true);
-        return false;
+        showToast("No valid workout rows found.", true); return false;
       }
+      
       allSets = parsed;
       currentSourceLabel = label;
+      
+      // UI State Transition
       document.getElementById("emptyStatePrompt").classList.add("hidden");
       document.getElementById("dashboardContent").classList.remove("hidden");
       document.getElementById("clearDataBtn").classList.remove("hidden");
       document.getElementById("mobileBottomNav").classList.remove("hidden");
+      
       syncDateBounds();
       populateSplitFilter();
       renderAll();
-      showToast("Loaded " + parsed.length + " sets from " + label);
+      showToast(`Loaded ${parsed.length} sets successfully`);
       return true;
     }
 
     function syncDateBounds() {
       const startEl = document.getElementById("startDateInput");
       const endEl = document.getElementById("endDateInput");
-      if (!allSets.length) {
-        startEl.value = "";
-        endEl.value = "";
-        return;
-      }
+      if (!allSets.length) return;
       const dates = allSets.map(r => r.date).sort();
       startEl.value = dates[0];
       endEl.value = dates[dates.length - 1];
@@ -471,7 +515,6 @@
       const startVal = document.getElementById("startDateInput").value;
       const endVal = document.getElementById("endDateInput").value;
       const splitVal = document.getElementById("splitSelect").value;
-
       return allSets.filter(r => {
         if (splitVal !== "ALL" && r.workout_name !== splitVal) return false;
         if (startVal && r.date < startVal) return false;
@@ -483,8 +526,7 @@
     function getMonday(dateStr) {
       const d = new Date(dateStr + "T00:00:00Z");
       const day = d.getUTCDay();
-      const diff = (day === 0 ? -6 : 1) - day;
-      d.setUTCDate(d.getUTCDate() + diff);
+      d.setUTCDate(d.getUTCDate() + ((day === 0 ? -6 : 1) - day));
       return d.toISOString().slice(0, 10);
     }
 
@@ -496,12 +538,10 @@
 
     function renderAll() {
       const rows = getFilteredSets();
-      document.getElementById("sourceBadge").textContent = `${currentSourceLabel} (${rows.length} sets shown)`;
+      document.getElementById("sourceBadge").textContent = `${currentSourceLabel} (${rows.length} sets)`;
 
-      // KPIs
       const workoutMap = new Map();
-      let totalVol = 0;
-      let maxWeight = 0;
+      let totalVol = 0, maxWeight = 0;
       rows.forEach(r => {
         totalVol += r.reps * r.weight_kg;
         if (r.weight_kg > maxWeight) maxWeight = r.weight_kg;
@@ -509,8 +549,7 @@
           workoutMap.set(r.workout_id, { id: r.workout_id, name: r.workout_name, date: r.date, dur: r.duration_minutes, sets: [], vol: 0 });
         }
         const w = workoutMap.get(r.workout_id);
-        w.sets.push(r);
-        w.vol += r.reps * r.weight_kg;
+        w.sets.push(r); w.vol += r.reps * r.weight_kg;
       });
 
       const workouts = Array.from(workoutMap.values()).sort((a, b) => b.date.localeCompare(a.date));
@@ -520,9 +559,8 @@
       document.getElementById("kpiSets").textContent = rows.length.toLocaleString();
       document.getElementById("kpiVolume").textContent = Math.round(totalVol).toLocaleString() + " kg";
       document.getElementById("kpiMaxWeight").textContent = maxWeight.toFixed(1) + " kg";
-      document.getElementById("kpiAvgDur").textContent = avgDur.toFixed(1) + " min";
+      document.getElementById("kpiAvgDur").textContent = avgDur.toFixed(0) + " min";
 
-      // Active weeks span
       let activeWeeks = 1;
       if (rows.length) {
         const dates = rows.map(r => r.date).sort();
@@ -531,19 +569,22 @@
         activeWeeks = Math.max(1, Math.ceil((maxD - minD) / (7 * 24 * 3600 * 1000)));
       }
 
-      // Split aggregations
-      const splitVol = {};
-      const splitSets = {};
+      // Charts Setup (iOS Colors)
+      const colorBlue = '#0A84FF';
+      const colorIndigo = '#5E5CE6';
+      
+      const splitVol = {}, splitSets = {};
       rows.forEach(r => {
         splitVol[r.workout_name] = (splitVol[r.workout_name] || 0) + r.reps * r.weight_kg;
         splitSets[r.workout_name] = (splitSets[r.workout_name] || 0) + 1;
       });
       const splitLabels = Object.keys(splitVol);
+      
       upsertChart("splitVolumeChart", {
         type: "bar",
         data: {
           labels: splitLabels,
-          datasets: [{ label: "Volume (kg)", data: splitLabels.map(k => Math.round(splitVol[k])), backgroundColor: "#0f4c5c", borderRadius: 6 }]
+          datasets: [{ label: "Volume (kg)", data: splitLabels.map(k => Math.round(splitVol[k])), backgroundColor: colorBlue, borderRadius: 6 }]
         },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
       });
@@ -551,35 +592,29 @@
         type: "bar",
         data: {
           labels: splitLabels,
-          datasets: [{ label: "Total Sets", data: splitLabels.map(k => splitSets[k]), backgroundColor: "#1b6b7e", borderRadius: 6 }]
+          datasets: [{ label: "Sets", data: splitLabels.map(k => splitSets[k]), backgroundColor: colorIndigo, borderRadius: 6 }]
         },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
       });
 
-      // Weekly volume
       const weekVol = {};
-      rows.forEach(r => {
-        const wk = getMonday(r.date);
-        weekVol[wk] = (weekVol[wk] || 0) + r.reps * r.weight_kg;
-      });
+      rows.forEach(r => { const wk = getMonday(r.date); weekVol[wk] = (weekVol[wk] || 0) + r.reps * r.weight_kg; });
       const weekLabels = Object.keys(weekVol).sort();
       upsertChart("weeklyVolumeChart", {
         type: "line",
         data: {
           labels: weekLabels,
           datasets: [{
-            label: "Weekly Volume (kg)",
+            label: "Weekly Vol (kg)",
             data: weekLabels.map(k => Math.round(weekVol[k])),
-            borderColor: "#0f4c5c",
-            backgroundColor: "rgba(15,76,92,0.12)",
-            fill: true,
-            tension: 0.3
+            borderColor: colorBlue,
+            backgroundColor: "rgba(10, 132, 255, 0.15)",
+            fill: true, tension: 0.4
           }]
         },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
       });
 
-      // Equipment doughnut
       const eqCounts = {};
       rows.forEach(r => { eqCounts[r.equipment] = (eqCounts[r.equipment] || 0) + 1; });
       const eqLabels = Object.keys(eqCounts).sort((a, b) => eqCounts[b] - eqCounts[a]);
@@ -589,13 +624,14 @@
           labels: eqLabels,
           datasets: [{
             data: eqLabels.map(k => eqCounts[k]),
-            backgroundColor: ["#0f4c5c", "#1b6b7e", "#2a9d8f", "#e9c46a", "#f4a261", "#e76f51", "#64748b", "#94a3b8"]
+            backgroundColor: ['#0A84FF', '#32D74B', '#FF9F0A', '#FF453A', '#BF5AF2', '#64D2FF', '#FF375F', '#5E5CE6'],
+            borderWidth: 0
           }]
         },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: window.innerWidth < 640 ? "bottom" : "right" } } }
+        options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'right', labels: {color: '#e5e7eb'} } } }
       });
 
-      // Muscle Balance
+      // Muscles
       const minT = Math.max(1, Number(document.getElementById("minTargetInput").value) || 8);
       const maxT = Math.max(minT + 1, Number(document.getElementById("maxTargetInput").value) || 16);
       const lowT = Math.max(1, minT / 2);
@@ -603,44 +639,29 @@
       const mStats = {};
       rows.forEach(r => {
         if (!mStats[r.muscle]) mStats[r.muscle] = { sets: 0, vol: 0 };
-        mStats[r.muscle].sets += 1;
-        mStats[r.muscle].vol += r.reps * r.weight_kg;
+        mStats[r.muscle].sets += 1; mStats[r.muscle].vol += r.reps * r.weight_kg;
       });
-      const musclesSorted = Object.entries(mStats)
-        .map(([muscle, st]) => {
-          const wkSets = st.sets / activeWeeks;
-          let status = "Optimal";
-          let badge = "bg-emerald-100 text-emerald-800";
-          let color = "#10b981";
-          if (wkSets < lowT) {
-            status = "Undertrained (Needs Attention)";
-            badge = "bg-rose-100 text-rose-800";
-            color = "#e11d48";
-          } else if (wkSets < minT) {
-            status = "Moderate (Room to Grow)";
-            badge = "bg-amber-100 text-amber-800";
-            color = "#f59e0b";
-          } else if (wkSets > maxT) {
-            status = "High (Watch Overtraining)";
-            badge = "bg-orange-100 text-orange-800";
-            color = "#ea580c";
-          }
-          return { muscle, sets: st.sets, wkSets, vol: st.vol, pct: rows.length ? (st.sets / rows.length) * 100 : 0, status, badge, color };
-        })
-        .sort((a, b) => b.sets - a.sets);
+      const musclesSorted = Object.entries(mStats).map(([muscle, st]) => {
+        const wkSets = st.sets / activeWeeks;
+        let status = "Optimal", badge = "bg-green-500/20 text-green-400", color = '#32D74B';
+        if (wkSets < lowT) { status = "Low (Needs work)"; badge = "bg-red-500/20 text-red-400"; color = '#FF453A'; }
+        else if (wkSets < minT) { status = "Moderate"; badge = "bg-orange-500/20 text-orange-400"; color = '#FF9F0A'; }
+        else if (wkSets > maxT) { status = "High (Overtraining)"; badge = "bg-purple-500/20 text-purple-400"; color = '#BF5AF2'; }
+        return { muscle, sets: st.sets, wkSets, vol: st.vol, pct: rows.length ? (st.sets/rows.length)*100 : 0, status, badge, color };
+      }).sort((a, b) => b.sets - a.sets);
 
-      document.getElementById("undertrainedList").textContent = musclesSorted.filter(m => m.status.startsWith("Undertrained")).map(m => m.muscle).join(", ") || "None";
+      document.getElementById("undertrainedList").textContent = musclesSorted.filter(m => m.status.startsWith("Low")).map(m => m.muscle).join(", ") || "None";
       document.getElementById("optimalList").textContent = musclesSorted.filter(m => m.status === "Optimal").map(m => m.muscle).join(", ") || "None";
       document.getElementById("overtrainedList").textContent = musclesSorted.filter(m => m.status.startsWith("High")).map(m => m.muscle).join(", ") || "None";
 
       document.getElementById("muscleTableBody").innerHTML = musclesSorted.map(m => `
-        <tr>
-          <td class="py-2 pr-4 font-semibold text-slate-800">${m.muscle}</td>
-          <td class="py-2 px-3 text-right">${m.sets}</td>
-          <td class="py-2 px-3 text-right">${m.wkSets.toFixed(1)}</td>
-          <td class="py-2 px-3 text-right">${Math.round(m.vol).toLocaleString()}</td>
-          <td class="py-2 px-3 text-right">${m.pct.toFixed(1)}%</td>
-          <td class="py-2 pl-3"><span class="inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${m.badge}">${m.status}</span></td>
+        <tr class="hover:bg-white/5 transition">
+          <td class="py-3 pr-4 font-semibold text-white">${m.muscle}</td>
+          <td class="py-3 px-3 text-right text-gray-300">${m.sets}</td>
+          <td class="py-3 px-3 text-right font-medium text-white">${m.wkSets.toFixed(1)}</td>
+          <td class="py-3 px-3 text-right text-gray-400">${Math.round(m.vol).toLocaleString()}</td>
+          <td class="py-3 px-3 text-right text-gray-400">${m.pct.toFixed(1)}%</td>
+          <td class="py-3 pl-4 text-center"><span class="inline-block rounded-lg px-2.5 py-1 text-xs font-semibold ${m.badge}">${m.status}</span></td>
         </tr>
       `).join("");
 
@@ -648,77 +669,51 @@
         type: "bar",
         data: {
           labels: musclesSorted.map(m => m.muscle),
-          datasets: [{ label: "Total Sets", data: musclesSorted.map(m => m.sets), backgroundColor: musclesSorted.map(m => m.color), borderRadius: 4 }]
+          datasets: [{ data: musclesSorted.map(m => m.sets), backgroundColor: musclesSorted.map(m => m.color), borderRadius: 6 }]
         },
         options: { indexAxis: "y", responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
       });
-
       upsertChart("muscleWeeklyChart", {
         type: "bar",
         data: {
           labels: musclesSorted.map(m => m.muscle),
-          datasets: [{ label: "Avg Sets / Week", data: musclesSorted.map(m => Number(m.wkSets.toFixed(1))), backgroundColor: musclesSorted.map(m => m.color), borderRadius: 4 }]
+          datasets: [{ data: musclesSorted.map(m => Number(m.wkSets.toFixed(1))), backgroundColor: musclesSorted.map(m => m.color), borderRadius: 6 }]
         },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
       });
 
-      // Personal Records
+      // PRs
       const prMap = {};
       rows.forEach(r => {
-        if (!prMap[r.exercise_name]) {
-          prMap[r.exercise_name] = { name: r.exercise_name, muscle: r.muscle, maxW: 0, est1RM: 0, sets: 0, vol: 0 };
-        }
+        if (!prMap[r.exercise_name]) prMap[r.exercise_name] = { name: r.exercise_name, maxW: 0, est1RM: 0, sets: 0, vol: 0 };
         const p = prMap[r.exercise_name];
-        p.sets += 1;
-        p.vol += r.reps * r.weight_kg;
+        p.sets += 1; p.vol += r.reps * r.weight_kg;
         if (r.weight_kg > p.maxW) p.maxW = r.weight_kg;
         const e1rm = r.reps > 0 ? r.weight_kg * (1 + r.reps / 30) : r.weight_kg;
         if (e1rm > p.est1RM) p.est1RM = e1rm;
       });
       const allPrs = Object.values(prMap).sort((a, b) => b.maxW - a.maxW);
-      const top10Prs = allPrs.filter(p => p.maxW > 0).slice(0, 10);
-
+      
       upsertChart("prChart", {
         type: "bar",
         data: {
-          labels: top10Prs.map(p => p.name),
-          datasets: [{ label: "Max Weight (kg)", data: top10Prs.map(p => p.maxW), backgroundColor: "#0f4c5c", borderRadius: 4 }]
+          labels: allPrs.slice(0, 10).map(p => p.name),
+          datasets: [{ data: allPrs.slice(0, 10).map(p => p.maxW), backgroundColor: colorBlue, borderRadius: 6 }]
         },
         options: { indexAxis: "y", responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
       });
 
       const prQuery = (document.getElementById("prSearch").value || "").toLowerCase();
-      const filteredPrs = allPrs.filter(p => p.name.toLowerCase().includes(prQuery) || p.muscle.toLowerCase().includes(prQuery));
-      document.getElementById("prTableBody").innerHTML = filteredPrs.map(p => `
-        <tr>
-          <td class="py-2 pr-4 font-semibold text-slate-800">${p.name}</td>
-          <td class="py-2 px-3 text-slate-500">${p.muscle}</td>
-          <td class="py-2 px-3 text-right font-semibold">${p.maxW.toFixed(1)}</td>
-          <td class="py-2 px-3 text-right">${p.est1RM.toFixed(1)}</td>
-          <td class="py-2 px-3 text-right">${p.sets}</td>
-          <td class="py-2 pl-3 text-right">${Math.round(p.vol).toLocaleString()}</td>
+      document.getElementById("prTableBody").innerHTML = allPrs.filter(p => p.name.toLowerCase().includes(prQuery)).map(p => `
+        <tr class="hover:bg-white/5 transition">
+          <td class="py-2 pr-4 font-semibold text-white">${p.name}</td>
+          <td class="py-2 px-3 text-right font-bold text-blue-400">${p.maxW.toFixed(1)}</td>
+          <td class="py-2 px-3 text-right text-gray-300">${p.est1RM.toFixed(1)}</td>
+          <td class="py-2 px-3 text-right text-gray-500">${Math.round(p.vol).toLocaleString()}</td>
         </tr>
       `).join("");
 
-      // Training Improvement Insights (Push/Pull, Upper/Lower, Frequency, Progressive Overload)
-      const upperMuscles = new Set(["Chest", "Triceps", "Shoulders", "Biceps", "Lats", "Trapezius", "Back", "Forearms"]);
-      const lowerMuscles = new Set(["Quadriceps", "Hamstring", "Glutes", "Calves", "Adductors", "Abductors"]);
-      const pushMuscles = new Set(["Chest", "Triceps", "Shoulders"]);
-      const pullMuscles = new Set(["Lats", "Back", "Biceps", "Trapezius", "Forearms"]);
-      let upperSets = 0, lowerSets = 0, pushSets = 0, pullSets = 0;
-      rows.forEach(r => {
-        if (upperMuscles.has(r.muscle)) upperSets++;
-        if (lowerMuscles.has(r.muscle)) lowerSets++;
-        if (pushMuscles.has(r.muscle)) pushSets++;
-        if (pullMuscles.has(r.muscle)) pullSets++;
-      });
-      const freqPerWk = workouts.length / activeWeeks;
-      const upperPct = rows.length ? Math.round((upperSets / rows.length) * 100) : 0;
-      const lowerPct = rows.length ? Math.round((lowerSets / rows.length) * 100) : 0;
-      const ppRatio = pullSets ? (pushSets / pullSets).toFixed(2) : "N/A";
-      document.getElementById("balanceRatioBadge").textContent = `Push:Pull ${ppRatio} · Upper ${upperPct}% / Lower ${lowerPct}%`;
-
-      // Progressive Overload per exercise (latest date vs prior dates)
+      // Insights & Overload
       const exByDate = {};
       rows.forEach(r => {
         if (r.weight_kg <= 0) return;
@@ -726,187 +721,153 @@
         if (!exByDate[r.exercise_name][r.date]) exByDate[r.exercise_name][r.date] = 0;
         if (r.weight_kg > exByDate[r.exercise_name][r.date]) exByDate[r.exercise_name][r.date] = r.weight_kg;
       });
+      
       const overloadRows = [];
       Object.entries(exByDate).forEach(([exName, dateMap]) => {
         const dList = Object.keys(dateMap).sort();
         if (dList.length < 2) return;
         const latestW = dateMap[dList[dList.length - 1]];
-        const priorVals = dList.slice(0, -1).map(d => dateMap[d]);
-        const priorAvg = priorVals.reduce((a, b) => a + b, 0) / priorVals.length;
+        const priorAvg = dList.slice(0, -1).map(d => dateMap[d]).reduce((a,b)=>a+b,0) / (dList.length - 1);
         const diff = latestW - priorAvg;
-        let trend = "Steady", cls = "bg-slate-100 text-slate-700";
-        if (diff > 0.5) { trend = `+${diff.toFixed(1)} kg ↑`; cls = "bg-emerald-100 text-emerald-800"; }
-        else if (diff < -0.5) { trend = `${diff.toFixed(1)} kg ↓`; cls = "bg-rose-100 text-rose-800"; }
+        let trend = "Steady", cls = "text-gray-400 bg-white/10";
+        if (diff > 0.5) { trend = `+${diff.toFixed(1)} kg ↑`; cls = "text-green-400 bg-green-500/20"; }
+        else if (diff < -0.5) { trend = `${diff.toFixed(1)} kg ↓`; cls = "text-red-400 bg-red-500/20"; }
         overloadRows.push({ exName, priorAvg, latestW, diff, trend, cls });
       });
       overloadRows.sort((a, b) => b.diff - a.diff);
 
-      document.getElementById("overloadTableBody").innerHTML = overloadRows.length
-        ? overloadRows.map(o => `
-          <tr>
-            <td class="py-2 pr-3 font-semibold text-slate-800">${o.exName}</td>
-            <td class="py-2 px-2 text-right">${o.priorAvg.toFixed(1)}</td>
-            <td class="py-2 px-2 text-right font-semibold">${o.latestW.toFixed(1)}</td>
-            <td class="py-2 pl-2"><span class="inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${o.cls}">${o.trend}</span></td>
-          </tr>
-        `).join("")
-        : '<tr><td colspan="4" class="py-3 text-center text-slate-400">Need 2+ weighted sessions per exercise to calculate overload trends.</td></tr>';
+      document.getElementById("overloadTableBody").innerHTML = overloadRows.length ? overloadRows.map(o => `
+        <tr class="hover:bg-white/5 transition">
+          <td class="py-3 pr-3 font-semibold text-white">${o.exName}</td>
+          <td class="py-3 px-2 text-right text-gray-400">${o.priorAvg.toFixed(1)}</td>
+          <td class="py-3 px-2 text-right font-semibold text-white">${o.latestW.toFixed(1)}</td>
+          <td class="py-3 pl-3 text-center"><span class="inline-block rounded-lg px-2 py-1 text-[11px] font-bold ${o.cls}">${o.trend}</span></td>
+        </tr>
+      `).join("") : '<tr><td colspan="4" class="py-4 text-center text-gray-500">Need 2+ sessions per exercise to show trends.</td></tr>';
 
-      const undertrainedNames = musclesSorted.filter(m => m.status.startsWith("Undertrained")).slice(0, 4).map(m => `${m.muscle} (${m.wkSets.toFixed(1)}/wk)`);
-      const progressingCount = overloadRows.filter(o => o.diff > 0.5).length;
-      const insights = [
-        {
-          title: "1. Fix Volume Gaps",
-          body: undertrainedNames.length ? `Prioritize ${undertrainedNames.join(", ")} — add 3–5 weekly sets to reach optimal growth.` : "All tracked muscle groups are at moderate or optimal weekly volume.",
-          tone: undertrainedNames.length ? "bg-rose-50 border-rose-200 text-rose-900" : "bg-emerald-50 border-emerald-200 text-emerald-900"
-        },
-        {
-          title: "2. Upper / Lower & Push / Pull",
-          body: lowerPct < 20 ? `Lower body is only ${lowerPct}% of sets. Add 1 dedicated Legs session/week to balance ${upperPct}% upper volume.` : `Balanced split (${upperPct}% upper / ${lowerPct}% lower, Push:Pull ${ppRatio}).`,
-          tone: lowerPct < 20 ? "bg-amber-50 border-amber-200 text-amber-900" : "bg-emerald-50 border-emerald-200 text-emerald-900"
-        },
-        {
-          title: "3. Overload & Frequency",
-          body: `Averaging ${freqPerWk.toFixed(1)} sessions/wk. ${progressingCount} of ${overloadRows.length} tracked lifts beat their prior average weight.`,
-          tone: "bg-sky-50 border-sky-200 text-sky-900"
-        }
-      ];
-      document.getElementById("coachingInsights").innerHTML = insights.map(i => `
-        <div class="rounded-xl border p-3 ${i.tone}">
-          <p class="font-bold mb-1">${i.title}</p>
-          <p class="leading-relaxed opacity-90">${i.body}</p>
-        </div>
-      `).join("");
+      const upperM = new Set(["Chest", "Triceps", "Shoulders", "Biceps", "Lats", "Trapezius", "Back", "Forearms"]);
+      const lowerM = new Set(["Quadriceps", "Hamstring", "Glutes", "Calves", "Adductors", "Abductors"]);
+      let uSets=0, lSets=0, puSets=0, plSets=0;
+      rows.forEach(r => {
+        if (upperM.has(r.muscle)) uSets++;
+        if (lowerM.has(r.muscle)) lSets++;
+        if (["Chest", "Triceps", "Shoulders"].includes(r.muscle)) puSets++;
+        if (["Lats", "Back", "Biceps", "Trapezius"].includes(r.muscle)) plSets++;
+      });
+      const uPct = rows.length ? Math.round((uSets/rows.length)*100) : 0;
+      const lPct = rows.length ? Math.round((lSets/rows.length)*100) : 0;
+      document.getElementById("balanceRatioBadge").textContent = `Upper ${uPct}% / Lower ${lPct}%`;
 
-      // Workout Log
+      document.getElementById("coachingInsights").innerHTML = [
+        { t: "1. Muscle Focus", b: musclesSorted.filter(m=>m.status.startsWith("Low")).length ? "Increase volume for undertrained muscles." : "Volume is optimal.", style: "border-blue-500/30 bg-blue-500/5 text-blue-100" },
+        { t: "2. Upper / Lower", b: `Currently at ${uPct}% Upper / ${lPct}% Lower body splits.`, style: "border-indigo-500/30 bg-indigo-500/5 text-indigo-100" },
+        { t: "3. Progressive Overload", b: `${overloadRows.filter(o=>o.diff>0.5).length} of ${overloadRows.length} lifts beating averages.`, style: "border-green-500/30 bg-green-500/5 text-green-100" }
+      ].map(i => `<div class="rounded-2xl border p-4 backdrop-blur-sm ${i.style}"><p class="font-bold mb-1 tracking-wide">${i.t}</p><p class="text-sm opacity-90">${i.b}</p></div>`).join("");
+
+      // Workout Log (Grid styling for dark mode)
       document.getElementById("workoutLogList").innerHTML = workouts.map(w => {
-        const exNames = Array.from(new Set(w.sets.map(s => s.exercise_name)));
-        return `
-          <div class="rounded-2xl bg-white p-4 shadow-sm border border-slate-200">
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <div class="flex items-center gap-2">
-                <span class="rounded-lg bg-[#0f4c5c] px-2.5 py-0.5 text-xs font-bold text-white">${w.name}</span>
-                <span class="text-sm font-semibold text-slate-800">${w.date}</span>
+        const exN = Array.from(new Set(w.sets.map(s => s.exercise_name)));
+        return `<div class="glass-panel rounded-3xl p-5 shadow-lg flex flex-col justify-between">
+            <div class="flex items-start justify-between mb-3">
+              <div>
+                <span class="inline-block rounded-xl bg-blue-600 px-3 py-1 text-xs font-bold text-white shadow-lg shadow-blue-500/20 mb-2">${w.name}</span>
+                <p class="text-sm font-semibold text-white">${w.date}</p>
               </div>
-              <div class="text-xs text-slate-500">${w.sets.length} sets · ${Math.round(w.vol).toLocaleString()} kg · ${w.dur} min</div>
+              <div class="text-right text-xs text-gray-400 font-medium">
+                ${w.sets.length} sets<br/>${Math.round(w.vol).toLocaleString()} kg<br/>${w.dur}m
+              </div>
             </div>
-            <p class="mt-2 text-xs text-slate-600">${exNames.join(" · ")}</p>
-          </div>
-        `;
+            <p class="text-xs text-gray-500 leading-relaxed mt-2 border-t border-white/10 pt-3">${exN.join(" • ")}</p>
+          </div>`;
       }).join("");
     }
 
     async function fetchRemoteUrl(url) {
-      if (!url.startsWith("https://")) {
-        showToast("Please enter a valid https:// URL.", true);
-        return;
-      }
+      if (!url.startsWith("https://")) { showToast("Enter a valid https:// URL.", true); return; }
       try {
         const res = await fetch(url);
         if (!res.ok) throw new Error("HTTP " + res.status);
-        const text = await res.text();
-        loadRawText(text, url.split("/").pop() || "Remote URL");
-      } catch (err) {
-        showToast("Could not fetch URL (CORS or network error). Try uploading or pasting instead.", true);
-      }
+        loadRawText(await res.text(), url.split("/").pop() || "URL Source");
+      } catch (err) { showToast("Fetch failed (Check CORS or network).", true); }
     }
 
-    // Event Wiring
-    document.getElementById("toggleControlsBtn").addEventListener("click", () => {
-      const panel = document.getElementById("controlsPanel");
-      panel.classList.toggle("hidden");
-    });
+    // UI Events
+    document.getElementById("toggleControlsBtn").addEventListener("click", () => document.getElementById("controlsPanel").classList.toggle("hidden"));
 
     document.querySelectorAll(".tab-btn").forEach(btn => {
       btn.addEventListener("click", () => {
-        const target = btn.getAttribute("data-tab");
+        const tgt = btn.getAttribute("data-tab");
         document.querySelectorAll(".tab-btn").forEach(b => {
-          b.classList.toggle("active", b.getAttribute("data-tab") === target);
+          b.classList.toggle("active", b.getAttribute("data-tab") === tgt);
+          if (b.closest('#mobileBottomNav')) {
+            b.classList.toggle("text-blue-400", b.getAttribute("data-tab") === tgt);
+            b.classList.toggle("text-gray-500", b.getAttribute("data-tab") !== tgt);
+          }
         });
         document.querySelectorAll(".tab-panel").forEach(p => p.classList.add("hidden"));
-        document.getElementById("tab-" + target).classList.remove("hidden");
+        document.getElementById("tab-" + tgt).classList.remove("hidden");
         window.scrollTo({ top: 0, behavior: "smooth" });
       });
     });
 
-    document.getElementById("fileInput").addEventListener("change", async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const text = await file.text();
-      loadRawText(text, file.name);
-      e.target.value = "";
-    });
+    const handleFile = async (e) => {
+      const f = e.target.files[0];
+      if (f) { loadRawText(await f.text(), f.name); e.target.value = ""; }
+    };
+    document.getElementById("fileInput").addEventListener("change", handleFile);
+    document.getElementById("emptyFileInput").addEventListener("change", handleFile);
 
     const dz = document.getElementById("dropZone");
-    dz.addEventListener("dragover", (e) => { e.preventDefault(); dz.classList.add("border-[#0f4c5c]", "bg-teal-50"); });
-    dz.addEventListener("dragleave", () => { dz.classList.remove("border-[#0f4c5c]", "bg-teal-50"); });
+    dz.addEventListener("dragover", (e) => { e.preventDefault(); dz.classList.add("border-blue-500", "bg-blue-500/10"); });
+    dz.addEventListener("dragleave", () => dz.classList.remove("border-blue-500", "bg-blue-500/10"));
     dz.addEventListener("drop", async (e) => {
-      e.preventDefault();
-      dz.classList.remove("border-[#0f4c5c]", "bg-teal-50");
-      const file = e.dataTransfer.files[0];
-      if (file) loadRawText(await file.text(), file.name);
+      e.preventDefault(); dz.classList.remove("border-blue-500", "bg-blue-500/10");
+      const f = e.dataTransfer.files[0];
+      if (f) loadRawText(await f.text(), f.name);
     });
 
-    document.getElementById("loadUrlBtn").addEventListener("click", () => {
-      fetchRemoteUrl(document.getElementById("urlInput").value.trim());
-    });
-
-    document.getElementById("openPasteBtn").addEventListener("click", () => {
-      document.getElementById("pasteModal").classList.remove("hidden");
-      document.getElementById("pasteModal").classList.add("flex");
-    });
-    const closePaste = () => {
-      document.getElementById("pasteModal").classList.add("hidden");
-      document.getElementById("pasteModal").classList.remove("flex");
-    };
-    document.getElementById("closePasteBtn").addEventListener("click", closePaste);
-    document.getElementById("cancelPasteBtn").addEventListener("click", closePaste);
+    const modal = document.getElementById("pasteModal");
+    const openModal = () => { modal.classList.remove("hidden"); modal.classList.add("flex"); };
+    const closeModal = () => { modal.classList.add("hidden"); modal.classList.remove("flex"); };
+    document.getElementById("openPasteBtn").addEventListener("click", openModal);
+    document.getElementById("emptyPasteBtn").addEventListener("click", openModal);
+    document.getElementById("closePasteBtn").addEventListener("click", closeModal);
+    document.getElementById("cancelPasteBtn").addEventListener("click", closeModal);
     document.getElementById("applyPasteBtn").addEventListener("click", () => {
-      if (loadRawText(document.getElementById("pasteInput").value, "Pasted Data")) closePaste();
+      if (loadRawText(document.getElementById("pasteInput").value, "Pasted Data")) closeModal();
     });
 
-    document.getElementById("emptyFileInput").addEventListener("change", async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      loadRawText(await file.text(), file.name);
-      e.target.value = "";
-    });
-    document.getElementById("emptyPasteBtn").addEventListener("click", () => {
-      document.getElementById("pasteModal").classList.remove("hidden");
-      document.getElementById("pasteModal").classList.add("flex");
-    });
-    document.getElementById("emptyLoadUrlBtn").addEventListener("click", () => {
-      fetchRemoteUrl(document.getElementById("emptyUrlInput").value.trim());
-    });
+    document.getElementById("loadUrlBtn").addEventListener("click", () => fetchRemoteUrl(document.getElementById("urlInput").value.trim()));
+    document.getElementById("emptyLoadUrlBtn").addEventListener("click", () => fetchRemoteUrl(document.getElementById("emptyUrlInput").value.trim()));
 
     document.getElementById("clearDataBtn").addEventListener("click", () => {
       allSets = [];
-      currentSourceLabel = "No data loaded";
       document.getElementById("sourceBadge").textContent = "No data loaded";
       document.getElementById("dashboardContent").classList.add("hidden");
       document.getElementById("clearDataBtn").classList.add("hidden");
       document.getElementById("mobileBottomNav").classList.add("hidden");
       document.getElementById("emptyStatePrompt").classList.remove("hidden");
-      showToast("Data cleared. Insert a new file or URL.");
+      showToast("Data cleared.");
     });
 
-    document.getElementById("clearDatesBtn").addEventListener("click", () => {
-      syncDateBounds();
-      renderAll();
-    });
-
+    document.getElementById("clearDatesBtn").addEventListener("click", () => { syncDateBounds(); renderAll(); });
     ["startDateInput", "endDateInput", "splitSelect", "minTargetInput", "maxTargetInput", "prSearch"].forEach(id => {
       document.getElementById(id).addEventListener("input", renderAll);
     });
 
-    // Init (starts empty and prompts for data unless ?data=https://... is passed)
+    // Initialize Mobile Nav Colors
+    document.querySelectorAll('#mobileBottomNav .tab-btn').forEach(b => {
+      if (b.classList.contains('active')) b.classList.add('text-blue-400');
+      else b.classList.add('text-gray-500');
+    });
+
     (function init() {
-      const params = new URLSearchParams(window.location.search);
-      const remoteUrl = params.get("data");
-      if (remoteUrl && remoteUrl.startsWith("https://")) {
-        document.getElementById("urlInput").value = remoteUrl;
-        document.getElementById("emptyUrlInput").value = remoteUrl;
-        fetchRemoteUrl(remoteUrl);
+      const p = new URLSearchParams(window.location.search);
+      const url = p.get("data");
+      if (url && url.startsWith("https://")) {
+        document.getElementById("urlInput").value = url;
+        document.getElementById("emptyUrlInput").value = url;
+        fetchRemoteUrl(url);
       }
     })();
   </script>
