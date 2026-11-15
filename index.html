@@ -395,35 +395,88 @@
       return eq;
     }
 
+    function normalizeExerciseTitle(str) {
+      return String(str || "")
+        .toLowerCase()
+        .replace(/&/g, ' and ')
+        .replace(/[^a-z0-9\s]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function inferMuscleFromExerciseName(exerciseName) {
+      const value = normalizeExerciseTitle(exerciseName);
+
+      const patterns = [
+        { muscle: "Chest", matches: ["bench press", "bench", "incline bench", "decline bench", "chest fly", "chest press", "pec deck", "dip", "push up", "pushup", "machine chest", "press chest"] },
+        { muscle: "Shoulders", matches: ["front raise", "lateral raise", "shoulder press", "overhead press", "military press", "upright row", "rear delt", "rear delt fly", "reverse fly", "face pull", "arnold press"] },
+        { muscle: "Biceps", matches: ["curl", "bicep", "hammer curl", "preacher curl", "reverse curl", "incline curl"] },
+        { muscle: "Triceps", matches: ["tricep", "triceps", "skull crusher", "pushdown", "dip", "extension"] },
+        { muscle: "Back", matches: ["row", "pulldown", "lat pulldown", "pull up", "chin up", "single arm row", "t bar row", "seated row", "deadlift", "good morning", "back extension", "wide grip row", "close grip row"] },
+        { muscle: "Lats", matches: ["lat", "pulldown", "lat pulldown", "pull over", "straight arm pulldown"] },
+        { muscle: "Trapezius", matches: ["shrug", "trap", "trap raise"] },
+        { muscle: "Quadriceps", matches: ["squat", "front squat", "hack squat", "leg press", "split squat", "lunge", "walking lunge", "step up", "goblet squat", "wall sit", "sissy squat"] },
+        { muscle: "Hamstrings", matches: ["hamstring", "leg curl", "single leg curl", "stiff leg deadlift", "romanian deadlift", "rdl", "good morning"] },
+        { muscle: "Glutes", matches: ["glute bridge", "hip thrust", "glute", "glute raise", "hip thrust"] },
+        { muscle: "Calves", matches: ["calf raise", "calf", "standing calf", "seated calf"] },
+        { muscle: "Abs", matches: ["ab", "crunch", "sit up", "plank", "leg raise", "hanging knee raise", "oblique", "side bend", "knee raise", "toe raise"] }
+      ];
+
+      for (const candidate of patterns) {
+        if (candidate.matches.some((term) => value.includes(term))) return candidate.muscle;
+      }
+
+      return "Other";
+    }
+
+    function resolveExerciseMuscle(exerciseMeta, exerciseName) {
+      const exercised = exerciseMeta && (exerciseMeta.muscle || exerciseMeta.target || exerciseMeta.primaryMuscle || exerciseMeta.primary_muscle);
+      if (exercised) {
+        const direct = String(exercised).trim();
+        if (direct) return direct;
+      }
+      return inferMuscleFromExerciseName(exerciseName);
+    }
+
     function parseGkdb(obj) {
       const exMap = {};
-      (obj.exercises || []).forEach(e => { exMap[e.id] = e; });
+      (obj.exercises || []).forEach((e) => {
+        const id = e && (e.id ?? e.exercise_id ?? e.exerciseId);
+        if (id !== undefined && id !== null) exMap[String(id)] = e;
+      });
+
       const rows = [];
-      (obj.workouts || []).forEach(w => {
-        const ts = w.timestamp || 0;
-        const endTs = w.endTimestamp || ts;
-        const istOffsetMs = 5.5 * 3600 * 1000;
-        const dtIst = new Date(ts * 1000 + istOffsetMs);
-        const dateStr = dtIst.toISOString().slice(0, 10);
-        const durMin = endTs >= ts ? Math.round(((endTs - ts) / 60) * 10) / 10 : 0;
-        (w.executions || []).forEach(ex => {
+      (obj.workouts || []).forEach((w) => {
+        const ts = Number(w.timestamp || 0);
+        const endTs = Number(w.endTimestamp || ts);
+        const workoutDate = new Date(ts * 1000);
+        const dateStr = !Number.isNaN(workoutDate.getTime()) ? workoutDate.toISOString().slice(0, 10) : "";
+        const durMin = endTs >= ts ? Number(((endTs - ts) / 60).toFixed(1)) : 0;
+        const workoutName = w.name || w.workout_name || "Workout";
+
+        (w.executions || []).forEach((ex, exIndex) => {
           const ref = ex.exercise || {};
-          const meta = exMap[ref.id] || {};
-          const exName = ref.name || meta.name || "Unknown";
-          const muscle = meta.muscle || "Other";
-          const equip = normEquip(meta.equipment || "Other");
-          (ex.sets || []).forEach((s, idx) => {
+          const meta = exMap[String(ref.id || "")] || {};
+          const exName = ref.name || meta.name || `Exercise ${exIndex + 1}`;
+          const muscle = resolveExerciseMuscle(meta, exName);
+          const equip = normEquip(meta.equipment || ref.equipment || "Other");
+          const sets = Array.isArray(ex.sets) ? ex.sets : [];
+
+          sets.forEach((s, idx) => {
+            const reps = Number(s.reps ?? s.repetitions ?? 0);
+            const weightKg = Number(s.weight ?? s.weight_kg ?? s.load ?? 0);
             rows.push({
-              workout_id: String(w.id ?? dateStr),
-              workout_name: w.name || "Workout",
+              workout_id: String(w.id ?? `${dateStr || "unknown"}_${workoutName}_${exIndex}`),
+              workout_name: workoutName,
               date: dateStr,
               duration_minutes: durMin,
               exercise_name: exName,
               muscle,
               equipment: equip,
-              set_number: (s.index ?? idx) + 1,
-              reps: Number(s.reps || 0),
-              weight_kg: Number(s.weight || 0),
+              set_number: Number(s.index ?? idx) + 1,
+              reps,
+              weight_kg: weightKg,
+              timestamp: ts,
             });
           });
         });
@@ -582,29 +635,51 @@
     }
 
     function normalizeBodyMuscle(muscle) {
+      const value = String(muscle || '').trim();
+      if (!value) return 'Other';
+      const key = value.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
       const map = {
-        'Bicep': 'Biceps',
-        'Biceps': 'Biceps',
-        'Tricep': 'Triceps',
-        'Triceps': 'Triceps',
-        'Shoulder': 'Shoulders',
-        'Shoulders': 'Shoulders',
-        'Quads': 'Quadriceps',
-        'Quadricep': 'Quadriceps',
-        'Quadriceps': 'Quadriceps',
-        'Hamstring': 'Hamstrings',
-        'Hamstrings': 'Hamstrings',
-        'Calf': 'Calves',
-        'Calves': 'Calves',
-        'Abs': 'Abs',
-        'Core': 'Abs',
-        'Lats': 'Lats',
-        'Back': 'Back',
-        'Trapezius': 'Trapezius',
-        'Glute': 'Glutes',
-        'Glutes': 'Glutes'
+        'bicep': 'Biceps',
+        'biceps': 'Biceps',
+        'tricep': 'Triceps',
+        'triceps': 'Triceps',
+        'shoulder': 'Shoulders',
+        'shoulders': 'Shoulders',
+        'shoulders and arms': 'Shoulders',
+        'delts': 'Shoulders',
+        'deltoid': 'Shoulders',
+        'deltoids': 'Shoulders',
+        'front delts': 'Shoulders',
+        'rear delts': 'Shoulders',
+        'side delts': 'Shoulders',
+        'quads': 'Quadriceps',
+        'quad': 'Quadriceps',
+        'quadricep': 'Quadriceps',
+        'quadriceps': 'Quadriceps',
+        'hamstring': 'Hamstrings',
+        'hamstrings': 'Hamstrings',
+        'calf': 'Calves',
+        'calves': 'Calves',
+        'tibialis': 'Calves',
+        'tibialis anterior': 'Calves',
+        'abs': 'Abs',
+        'abdominals': 'Abs',
+        'abdominal': 'Abs',
+        'core': 'Abs',
+        'oblique': 'Abs',
+        'obliques': 'Abs',
+        'lats': 'Lats',
+        'back': 'Back',
+        'trapezius': 'Trapezius',
+        'traps': 'Trapezius',
+        'glute': 'Glutes',
+        'glutes': 'Glutes',
+        'adductors': 'Quadriceps',
+        'abductors': 'Glutes',
+        'forearm': 'Forearms',
+        'forearms': 'Forearms'
       };
-      return map[muscle] || muscle;
+      return map[key] || value;
     }
 
     const RECOVERY_CONSTANTS = {
@@ -622,7 +697,9 @@
       hamstrings:  { base: 22, perSet: 4.0 },
       glutes:      { base: 19, perSet: 3.8 },
       calves:      { base: 13, perSet: 2.5 },
-      abs:         { base: 12, perSet: 2.5 }
+      abs:         { base: 12, perSet: 2.5 },
+      abductors:   { base: 16, perSet: 3.0 },
+      adductors:   { base: 18, perSet: 3.2 }
     };
 
     function getRecoveryConfigKey(muscleName) {
@@ -641,21 +718,40 @@
         quadriceps: 'quadriceps',
         quads: 'quadriceps',
         hamstrings: 'hamstrings',
+        hamstring: 'hamstrings',
         glutes: 'glutes',
         calves: 'calves',
         abs: 'abs',
         core: 'abs',
+        oblique: 'abs',
         obliques: 'abs',
-        tibialis: 'calves'
+        tibialis: 'calves',
+        'abdominals': 'abs',
+        'abdominal': 'abs',
+        'front delts': 'front_delts',
+        'side delts': 'side_delts',
+        'rear delts': 'rear_delts',
+        delts: 'front_delts',
+        deltoid: 'front_delts',
+        abductors: 'glutes',
+        adductors: 'quadriceps'
       };
       return map[normalized] || normalized;
     }
 
     function calculateRecovery(muscle, sets, workoutTimestamp, currentTimestamp = Date.now()) {
-      const muscleKey = String(muscle || '').toLowerCase().trim();
-      const config = RECOVERY_CONSTANTS[muscleKey];
+      const rawMuscleKey = String(muscle || '').trim();
+      const muscleKey = getRecoveryConfigKey(rawMuscleKey).toLowerCase();
+      const config = RECOVERY_CONSTANTS[muscleKey] || RECOVERY_CONSTANTS[rawMuscleKey.toLowerCase()];
       if (!config) {
-        throw new Error(`Unknown muscle group: ${muscleKey}`);
+        return {
+          muscle: muscleKey || 'other',
+          sets,
+          elapsedHours: 0,
+          estimatedRecoveryHours: 24,
+          recoveryPercentage: 100,
+          status: 'Recovered'
+        };
       }
       if (!Number.isFinite(sets) || sets < 0) {
         throw new Error('Sets must be a non-negative number');
@@ -1008,6 +1104,12 @@
       });
     }
 
+    function toTimestampMs(value) {
+      const num = Number(value);
+      if (!Number.isFinite(num)) return null;
+      return num > 1e12 ? num : num * 1000;
+    }
+
     async function renderRecoverySection(rows, musclesSorted, targetSets) {
       const byMuscle = {};
       rows.forEach(r => {
@@ -1015,7 +1117,7 @@
         if (!byMuscle[norm]) byMuscle[norm] = { sets: 0, lastDate: null, totalLoad: 0, recentSets: 0, lastTimestamp: null };
         byMuscle[norm].sets += 1;
         byMuscle[norm].totalLoad += r.reps * r.weight_kg;
-        const workoutTs = Number(r.timestamp || Date.parse(`${r.date}T00:00:00Z`));
+        const workoutTs = toTimestampMs(r.timestamp) ?? Date.parse(`${r.date}T00:00:00Z`);
         if (!byMuscle[norm].lastTimestamp || workoutTs > byMuscle[norm].lastTimestamp) {
           byMuscle[norm].lastTimestamp = workoutTs;
           byMuscle[norm].lastDate = r.date;
@@ -1247,13 +1349,15 @@
       const exerciseProgressMap = {};
       rows.forEach(r => {
         if (!r.weight_kg || r.weight_kg <= 0) return;
-        if (!exerciseProgressMap[r.exercise_name]) exerciseProgressMap[r.exercise_name] = [];
-        exerciseProgressMap[r.exercise_name].push({ date: r.date, weight: Number(r.weight_kg) });
+        if (!exerciseProgressMap[r.exercise_name]) exerciseProgressMap[r.exercise_name] = {};
+        const dayKey = r.date;
+        const volume = Number(r.reps || 0) * Number(r.weight_kg || 0);
+        exerciseProgressMap[r.exercise_name][dayKey] = (exerciseProgressMap[r.exercise_name][dayKey] || 0) + volume;
       });
 
       const selectedProgressExercise = progressSelect && progressSelect.value ? progressSelect.value : (allPrs[0] ? allPrs[0].name : "");
       const progressSeries = selectedProgressExercise && exerciseProgressMap[selectedProgressExercise]
-        ? exerciseProgressMap[selectedProgressExercise].sort((a, b) => a.date.localeCompare(b.date))
+        ? Object.entries(exerciseProgressMap[selectedProgressExercise]).map(([date, volume]) => ({ date, volume })).sort((a, b) => a.date.localeCompare(b.date))
         : [];
 
       upsertChart("prChart", {
@@ -1261,8 +1365,8 @@
         data: {
           labels: progressSeries.map(p => p.date),
           datasets: [{
-            label: selectedProgressExercise || "Exercise",
-            data: progressSeries.map(p => p.weight),
+            label: (selectedProgressExercise || "Exercise") + " volume",
+            data: progressSeries.map(p => Number(p.volume.toFixed(1))),
             borderColor: colorBlue,
             backgroundColor: "rgba(10, 132, 255, 0.15)",
             fill: false,
