@@ -427,9 +427,8 @@
     }
 
     function parseCsv(text) {
-      const lines = text.split(/
-?
-/).filter(l => l.trim().length > 0);
+      // Fixed newline splitting to cleanly support Windows (\r\n) and Unix (\n) line breaks
+      const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
       if (lines.length < 2) return [];
       const headers = parseCsvLine(lines[0]).map(h => h.toLowerCase().trim());
       const rows = [];
