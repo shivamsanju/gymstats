@@ -607,6 +607,81 @@
       return map[muscle] || muscle;
     }
 
+    const RECOVERY_CONSTANTS = {
+      chest:       { base: 16, perSet: 3.5 },
+      back:        { base: 18, perSet: 3.5 },
+      lats:        { base: 17, perSet: 3.5 },
+      traps:       { base: 16, perSet: 3.0 },
+      front_delts: { base: 16, perSet: 3.0 },
+      side_delts:  { base: 14, perSet: 2.8 },
+      rear_delts:  { base: 14, perSet: 2.8 },
+      biceps:      { base: 14, perSet: 2.8 },
+      triceps:     { base: 15, perSet: 3.0 },
+      forearms:    { base: 12, perSet: 2.5 },
+      quadriceps:  { base: 20, perSet: 3.8 },
+      hamstrings:  { base: 22, perSet: 4.0 },
+      glutes:      { base: 19, perSet: 3.8 },
+      calves:      { base: 13, perSet: 2.5 },
+      abs:         { base: 12, perSet: 2.5 }
+    };
+
+    function getRecoveryConfigKey(muscleName) {
+      const normalized = normalizeBodyMuscle(muscleName || '').toLowerCase();
+      const map = {
+        chest: 'chest',
+        back: 'back',
+        lats: 'lats',
+        traps: 'traps',
+        trapezius: 'traps',
+        shoulders: 'front_delts',
+        shoulder: 'front_delts',
+        biceps: 'biceps',
+        triceps: 'triceps',
+        forearms: 'forearms',
+        quadriceps: 'quadriceps',
+        quads: 'quadriceps',
+        hamstrings: 'hamstrings',
+        glutes: 'glutes',
+        calves: 'calves',
+        abs: 'abs',
+        core: 'abs',
+        obliques: 'abs',
+        tibialis: 'calves'
+      };
+      return map[normalized] || normalized;
+    }
+
+    function calculateRecovery(muscle, sets, workoutTimestamp, currentTimestamp = Date.now()) {
+      const muscleKey = String(muscle || '').toLowerCase().trim();
+      const config = RECOVERY_CONSTANTS[muscleKey];
+      if (!config) {
+        throw new Error(`Unknown muscle group: ${muscleKey}`);
+      }
+      if (!Number.isFinite(sets) || sets < 0) {
+        throw new Error('Sets must be a non-negative number');
+      }
+      if (!Number.isFinite(workoutTimestamp) || !Number.isFinite(currentTimestamp) || workoutTimestamp > currentTimestamp) {
+        throw new Error('Invalid workout or current timestamp');
+      }
+      const elapsedHours = (currentTimestamp - workoutTimestamp) / 3600000;
+      const estimatedRecoveryHours = config.base + sets * config.perSet;
+      const recoveryPercentage = Math.min(100, (elapsedHours / estimatedRecoveryHours) * 100);
+      let status;
+      if (recoveryPercentage < 50) status = 'Recovering';
+      else if (recoveryPercentage < 70) status = 'Partially Recovered';
+      else if (recoveryPercentage < 85) status = 'Mostly Recovered';
+      else if (recoveryPercentage < 95) status = 'Nearly Recovered';
+      else status = 'Recovered';
+      return {
+        muscle: muscleKey,
+        sets,
+        elapsedHours: Number(elapsedHours.toFixed(1)),
+        estimatedRecoveryHours,
+        recoveryPercentage: Number(recoveryPercentage.toFixed(1)),
+        status
+      };
+    }
+
     function getSetColorForLoad(score) {
       if (score <= 0) return 'rgba(255,255,255,0)';
       if (score <= 1) return '#fef08a';
@@ -937,10 +1012,14 @@
       const byMuscle = {};
       rows.forEach(r => {
         const norm = normalizeBodyMuscle(r.muscle);
-        if (!byMuscle[norm]) byMuscle[norm] = { sets: 0, lastDate: null, totalLoad: 0, recentSets: 0 };
+        if (!byMuscle[norm]) byMuscle[norm] = { sets: 0, lastDate: null, totalLoad: 0, recentSets: 0, lastTimestamp: null };
         byMuscle[norm].sets += 1;
         byMuscle[norm].totalLoad += r.reps * r.weight_kg;
-        if (!byMuscle[norm].lastDate || r.date > byMuscle[norm].lastDate) byMuscle[norm].lastDate = r.date;
+        const workoutTs = Number(r.timestamp || Date.parse(`${r.date}T00:00:00Z`));
+        if (!byMuscle[norm].lastTimestamp || workoutTs > byMuscle[norm].lastTimestamp) {
+          byMuscle[norm].lastTimestamp = workoutTs;
+          byMuscle[norm].lastDate = r.date;
+        }
         const d = new Date(`${r.date}T00:00:00Z`);
         const ageDays = Math.round((Date.now() - d.getTime()) / 86400000);
         if (ageDays <= 21) byMuscle[norm].recentSets += 1;
@@ -948,47 +1027,47 @@
 
       const recoveryRows = musclesSorted.map((muscle) => {
         const key = normalizeBodyMuscle(muscle.muscle);
-        const stats = byMuscle[key] || { sets: 0, lastDate: null, totalLoad: 0, recentSets: 0 };
-        const lastDate = stats.lastDate ? new Date(`${stats.lastDate}T00:00:00Z`) : null;
-        const daysSince = lastDate ? Math.max(0, Math.round((Date.now() - lastDate.getTime()) / 86400000)) : 999;
+        const stats = byMuscle[key] || { sets: 0, lastDate: null, totalLoad: 0, recentSets: 0, lastTimestamp: null };
+        const lastTimestamp = stats.lastTimestamp || null;
+        const daysSince = lastTimestamp ? Math.max(0, Math.round((Date.now() - lastTimestamp) / 86400000)) : 999;
         const weeklyStimulus = Number(muscle.wkSets || 0);
         const target = Math.max(2, targetSets);
+        const configKey = getRecoveryConfigKey(key);
+        const workoutTs = lastTimestamp || Date.now();
 
-        const recencyScore = clamp(100 - (daysSince / 28) * 100, 0, 100);
-        const stimulusScore = clamp((weeklyStimulus / target) * 100, 0, 100);
-        const fatigueScore = clamp((stats.recentSets / Math.max(2, target * 2.25)) * 100, 0, 100);
-        const recoveryScore = Math.round((recencyScore * 0.5) + (stimulusScore * 0.25) + ((100 - fatigueScore) * 0.25));
+        let score = 100;
+        let status = 'Recovered';
+        if (lastTimestamp) {
+          const recovery = calculateRecovery(configKey, Math.max(1, weeklyStimulus), workoutTs, Date.now());
+          score = Number(recovery.recoveryPercentage);
+          status = recovery.status;
+        }
 
         const setsNeeded = Math.max(0, Number((target - weeklyStimulus).toFixed(1)));
         const workedThisWeek = stats.sets > 0;
-        let tone = 'Recovered';
-        if (recoveryScore < 50) tone = 'Needs work';
-        else if (recoveryScore < 75) tone = 'Recovering';
 
         return {
           muscle: key,
-          score: recoveryScore,
-          tone,
+          score,
+          detailStatus: status,
+          tone: score >= 85 ? 'Recovered' : score >= 60 ? 'Recovering' : 'Needs work',
           setsNeeded,
           daysSince,
           wkSets: weeklyStimulus,
           workedThisWeek,
-          fatigueScore,
-          recencyScore,
-          stimulusScore,
         };
       }).sort((a, b) => b.score - a.score);
 
       document.getElementById('recoveryTableBody').innerHTML = recoveryRows.slice(0, 5).map((item) => {
         const barColor = getRecoveryColor(item.score);
-        const readyState = item.score >= 75 ? 'Ready' : item.score >= 55 ? 'Caution' : 'Not ready';
-        const readyTone = item.score >= 75 ? 'text-green-300 bg-green-500/15' : item.score >= 55 ? 'text-yellow-300 bg-yellow-500/15' : 'text-red-300 bg-red-500/15';
+        const readyState = item.score >= 85 ? 'Ready' : item.score >= 60 ? 'Caution' : 'Not ready';
+        const readyTone = item.score >= 85 ? 'text-green-300 bg-green-500/15' : item.score >= 60 ? 'text-yellow-300 bg-yellow-500/15' : 'text-red-300 bg-red-500/15';
         const recencyLabel = item.daysSince === 999 ? 'No data' : `${item.daysSince}d`;
         const setsNeed = item.setsNeeded ? `${item.setsNeeded.toFixed(1)} sets` : 'Target hit';
         return `
           <tr class="hover:bg-white/5 transition">
             <td class="py-3 pr-3 font-semibold text-white">${item.muscle}</td>
-            <td class="py-3 px-2 text-right font-bold" style="color:${barColor};">${item.score}%</td>
+            <td class="py-3 px-2 text-right font-bold" style="color:${barColor};">${item.score.toFixed(1)}%</td>
             <td class="py-3 px-2 text-right"><span class="inline-block rounded-full px-2 py-1 text-[10px] font-semibold ${readyTone}">${readyState}</span></td>
             <td class="py-3 px-2 text-right text-gray-400">${recencyLabel}</td>
             <td class="py-3 pl-3 text-right text-gray-300">${setsNeed}</td>
